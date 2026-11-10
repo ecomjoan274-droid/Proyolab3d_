@@ -4,14 +4,14 @@ Perfiles para **Anycubic Slicer Next** pensados para el modelo
 `llavero_botecito_kiroestetika_v2` (bote con rosca + tapa con logo bicolor).
 
 **Versión solo logo:** se han quitado las letras "olivia" y "kiroestética". Sus huecos
-en la tapa se han rellenado y la cara queda lisa y marrón. Solo queda el logo verde de las hojas
+en la tapa se han rellenado y la cara queda lisa y marrón. Solo queda el logo verde de las hojas, **centrado en la tapa**
 (ver `antes_despues_tapa.png`).
 
 | Archivo | Qué es |
 |---|---|
 | `crema.json` | Perfil de **proceso** (calidad) llamado `crema` |
 | `crema PLA Elegoo.json` | Perfil de **filamento** para PLA Elegoo |
-| `llavero_botecito_solo_logo_crema.3mf` | Tu proyecto **sin letras, solo con el logo**, y sin los ajustes por objeto que pisaban el perfil |
+| `llavero_botecito_solo_logo_crema.3mf` | Tu proyecto **sin letras, con el logo centrado**, y sin los ajustes por objeto que pisaban el perfil |
 | `antes_despues_tapa.png` | Vista de la cara de la tapa antes y después |
 
 ## Cómo instalarlo
