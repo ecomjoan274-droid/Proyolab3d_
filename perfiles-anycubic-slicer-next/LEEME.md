@@ -3,18 +3,23 @@
 Perfiles para **Anycubic Slicer Next** pensados para el modelo
 `llavero_botecito_kiroestetika_v2` (bote con rosca + tapa con logo bicolor).
 
+**Versión solo logo:** se han quitado las letras "olivia" y "kiroestética". Sus huecos
+en la tapa se han rellenado y la cara queda lisa y marrón. Solo queda el logo verde de las hojas
+(ver `antes_despues_tapa.png`).
+
 | Archivo | Qué es |
 |---|---|
 | `crema.json` | Perfil de **proceso** (calidad) llamado `crema` |
 | `crema PLA Elegoo.json` | Perfil de **filamento** para PLA Elegoo |
-| `llavero_botecito_kiroestetika_v2_crema.3mf` | Tu proyecto, sin los ajustes por objeto que pisaban el perfil |
+| `llavero_botecito_solo_logo_crema.3mf` | Tu proyecto **sin letras, solo con el logo**, y sin los ajustes por objeto que pisaban el perfil |
+| `antes_despues_tapa.png` | Vista de la cara de la tapa antes y después |
 
 ## Cómo instalarlo
 
 1. Abre Anycubic Slicer Next y elige la impresora **Anycubic Kobra 3 V2 0.4 nozzle**.
 2. **Archivo → Importar → Importar configuraciones…** y selecciona `crema.json`
    y `crema PLA Elegoo.json`.
-3. Abre `llavero_botecito_kiroestetika_v2_crema.3mf`.
+3. Abre `llavero_botecito_solo_logo_crema.3mf`.
 4. En **Proceso** elige `crema`. En **Filamento**, asigna `crema PLA Elegoo` a los
    **dos** filamentos (1 = marrón, 2 = verde del logo).
 5. En **Tipo de placa** elige **Textured PEI Plate**.
@@ -27,14 +32,14 @@ Perfiles para **Anycubic Slicer Next** pensados para el modelo
 ## Por qué estos valores
 
 Medidas del modelo: bote de Ø32 × 21 mm con rosca exterior (de 14 a 20,5 mm),
-tapa de Ø32 × 9,3 mm con rosca interior y logo verde de **0,6 mm**
-hundido en la cara que apoya en la cama.
+tapa de Ø32 × 9,3 mm con rosca interior y logo verde (hojas) de **0,6 mm**
+incrustado en la cara que apoya en la cama.
 
 | Ajuste | Valor | Motivo |
 |---|---|---|
 | Altura de capa | **0,12 mm** | Rosca suave y buen detalle sin disparar el tiempo |
 | Primera capa | **0,24 mm** | 0,24 + 3 × 0,12 = **0,60 mm**: el logo termina justo en una capa y solo hay 4 capas con cambio de color |
-| Generador de perímetros | Arachne | Letras y bordes del logo más limpios |
+| Generador de perímetros | Arachne | Puntas finas de las hojas más limpias |
 | Perímetros | 4 | Pared y rosca resistentes |
 | Capas sup./inf. | 8 / 6 | Superficies cerradas, sin transparencias |
 | Relleno | 25 % gyroid | Pieza rígida para un llavero |
