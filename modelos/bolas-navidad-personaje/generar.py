@@ -3,13 +3,14 @@
 
 Uso: generar.py [carpeta_salida]
 
-Cada bola es un disco con anilla para colgar. El dibujo va en relieve por
-escalones, y cada escalón es de un solo color (filamento):
+Cada bola es un disco con anilla para colgar. El personaje está dibujado con
+curvas (diseno.py) y va en relieve por escalones; cada escalón es de un solo
+color (filamento):
 
   0,0 a 1,6 mm  base    blanco   filamento 1 (fondo, cara, manos y camisa)
   1,6 a 2,2 mm  nivel 1 rojo     filamento 2 (chaqueta, boina, aro y estrellas)
-  2,2 a 2,8 mm  nivel 2 negro    filamento 3 (pelo, ojos, boca, pantalón y contornos)
-  2,8 a 3,4 mm  nivel 3 azul     filamento 4 (corbata)
+  2,2 a 2,8 mm  nivel 2 negro    filamento 3 (pelo, ojos, contornos, pantalón y filete del aro)
+  2,8 a 3,4 mm  nivel 3 azul     filamento 4 (corbata y copos de nieve)
 
 Cuatro colores, uno por cada hueco del ACE Pro. La cara y las manos van en
 blanco con un contorno negro, para que se distingan del fondo blanco.
@@ -24,16 +25,14 @@ import math
 import os
 import sys
 
-import cv2
 import shapely
 import numpy as np
 import trimesh
 from PIL import Image, ImageDraw, ImageFilter
-from shapely import affinity
 from shapely.geometry import MultiPolygon, Point, Polygon, box
 from shapely.ops import unary_union
 
-from clasificar import AZUL, BLANCO, NEGRO, PIEL, ROJO, clasificar
+from diseno import copo, personaje
 from proyecto_3mf import escribir_3mf
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
@@ -43,33 +42,22 @@ ARO = 2.5            # ancho del borde en relieve
 BASE = 1.6           # grosor de la base blanca
 ESCALON = 0.6        # altura de cada color (3 capas de 0,2 mm)
 AGUJERO = 4.4        # diámetro del agujero para el hilo
-CONTORNO = 0.65      # ancho de la línea negra alrededor de la cara y las manos
 NOMBRES = ["0_base_blanco", "1_rojo", "2_negro", "3_azul"]
-PIEZAS = ["Base, cara y manos (blanco)", "Chaqueta, boina y aro (rojo)", "Pelo, ojos, pantalon y contornos (negro)", "Corbata (azul)"]
+PIEZAS = ["Base, cara y camisa (blanco)", "Chaqueta, boina y aro (rojo)", "Pelo, ojos, contornos y pantalon (negro)", "Corbata y copos de nieve (azul)"]
 COLORES = [(246, 246, 244), (200, 30, 36), (28, 28, 32), (30, 80, 190)]
-# Colores del dibujo que suben a cada nivel (lo que no está aquí se queda en la base blanca)
-NIVELES = [(ROJO, NEGRO, AZUL), (NEGRO, AZUL), (AZUL,)]
 
 VERSIONES = {
-    # mm_px: tamaño de cada píxel del dibujo; y_arriba: altura (mm) de la fila 0
-    "busto": dict(mm_px=0.34, y_arriba=34.0,
-                  estrellas=[(-27, 17, 4.2), (27, 17, 4.2), (-31, 2, 2.6), (31, 2, 2.6)],
-                  puntos=[(-22, 27, 1.1), (22, 27, 1.1), (-25, 7, 0.9), (25, 7, 0.9)]),
-    "cuerpo_entero": dict(mm_px=0.142, y_arriba=34.0,
-                          estrellas=[(-21, 14, 5.0), (21, 14, 5.0), (-25, -6, 3.6), (25, -6, 3.6),
-                                     (-17, -22, 3.0), (17, -22, 3.0)],
-                          puntos=[(-14, 26, 1.2), (14, 26, 1.2), (-30, 6, 1.0), (30, 6, 1.0),
-                                  (-15, -8, 1.0), (15, -8, 1.0), (-27, -18, 1.0), (27, -18, 1.0)]),
+    # escala: mm por píxel del dibujo de referencia (x4); y_arriba: altura (mm) de la fila 0
+    "busto": dict(escala=0.085, y_arriba=34.0, contorno=0.7, entero=False, detalle=True,
+                  copos=[(-27, 17, 4.6), (27, 17, 4.6), (-31.5, 2, 2.6), (31.5, 2, 2.6)],
+                  puntos=[(-21, 28, 0.9), (21, 28, 0.9), (-24, 7.5, 0.8), (24, 7.5, 0.8),
+                          (-33, 11, 0.7), (33, 11, 0.7)]),
+    "cuerpo_entero": dict(escala=0.0355, y_arriba=34.0, contorno=0.5, entero=True, detalle=False,
+                          copos=[(-21, 15, 5.0), (21, 15, 5.0), (-25, -6, 3.8), (25, -6, 3.8),
+                                 (-17, -23, 3.0), (17, -23, 3.0)],
+                          puntos=[(-13, 27, 1.0), (13, 27, 1.0), (-30, 5, 0.9), (30, 5, 0.9),
+                                  (-14, -9, 0.9), (14, -9, 0.9), (-27, -17, 0.9), (27, -17, 0.9)]),
 }
-
-
-def estrella(cx, cy, r, puntas=5):
-    pts = []
-    for i in range(puntas * 2):
-        ang = math.pi / 2 + i * math.pi / puntas
-        rr = r if i % 2 == 0 else r * 0.42
-        pts.append((cx + rr * math.cos(ang), cy + rr * math.sin(ang)))
-    return Polygon(pts).buffer(0.25).buffer(-0.1)
 
 
 def poligonos(geom):
@@ -80,45 +68,10 @@ def poligonos(geom):
     return [g for g in getattr(geom, "geoms", []) if isinstance(g, Polygon)]
 
 
-def mascara_a_geom(mask, mm_px, x_centro, y_arriba, escala=8):
-    """Convierte una máscara de píxeles en polígonos suaves, en milímetros."""
-    m = np.pad(mask.astype(np.float32), 2)
-    m = cv2.resize(m, None, fx=escala, fy=escala, interpolation=cv2.INTER_CUBIC)
-    m = cv2.GaussianBlur(m, (0, 0), escala * 0.8)
-    binaria = (m > 0.5).astype(np.uint8)
-    contornos, jer = cv2.findContours(binaria, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_NONE)
-    if jer is None:
-        return Polygon()
-
-    def a_mm(c):
-        pts = c[:, 0, :].astype(float) / escala - 2
-        return [((x - x_centro) * mm_px, y_arriba - y * mm_px) for x, y in pts]
-
-    polys = []
-    for i, c in enumerate(contornos):
-        if jer[0][i][3] != -1 or len(c) < 4:
-            continue
-        huecos, j = [], jer[0][i][2]
-        while j != -1:
-            if len(contornos[j]) >= 4:
-                huecos.append(a_mm(contornos[j]))
-            j = jer[0][j][0]
-        p = Polygon(a_mm(c), huecos).buffer(0)
-        polys.extend(poligonos(p))
-    return unary_union(polys).simplify(0.04)
-
-
-def limpiar(geom, ancho_min, area_min):
-    """Quita lo que es demasiado fino o pequeño para una boquilla de 0,4 mm."""
-    g = geom.buffer(ancho_min / 2).buffer(-ancho_min / 2)       # cierra rendijas
-    g = g.buffer(-ancho_min / 2).buffer(ancho_min / 2)          # quita pelos finos
-    res = []
-    for p in poligonos(g):
-        if p.area < area_min:
-            continue
-        huecos = [h for h in p.interiors if Polygon(h).area >= area_min]
-        res.append(Polygon(p.exterior, huecos))
-    return unary_union(res).buffer(0)
+def limpiar(geom, ancho_min=0.4, area_min=0.3):
+    """Quita trozos más finos que la boquilla puede hacer y migas sueltas."""
+    g = geom.buffer(-ancho_min / 2, join_style=1).buffer(ancho_min / 2, join_style=1)
+    return unary_union([p for p in poligonos(g) if p.area >= area_min]).buffer(0)
 
 
 def extruir(geom, z0, alto):
@@ -132,13 +85,19 @@ def extruir(geom, z0, alto):
                 break
             q = max(poligonos(p.buffer(retoque).simplify(retoque)), key=lambda g: g.area)
             m = trimesh.creation.extrude_polygon(q, alto)
+        if not m.is_watertight:  # último recurso: se trocea en franjas, que sí cierran
+            x0, _, x1, _ = p.bounds
+            franjas = np.arange(x0, x1 + 3, 3)
+            trozos = [p.intersection(box(a, -999, b, 999)) for a, b in zip(franjas[:-1], franjas[1:])]
+            partes.append(extruir(MultiPolygon([t for g in trozos for t in poligonos(g)]), 0, alto))
+            continue
         partes.append(m)
     malla = trimesh.util.concatenate(partes)
     malla.apply_translation((0, 0, z0))
     return malla
 
 
-def construir(nombre, cfg, clases):
+def construir(nombre, cfg):
     r = DIAMETRO / 2
     disco = Point(0, 0).buffer(r, 128)
     interior = Point(0, 0).buffer(r - ARO, 128)
@@ -146,41 +105,27 @@ def construir(nombre, cfg, clases):
     tapa = box(-8.5, r - 3, 8.5, r + 7.5).buffer(2.0, 16)
     silueta = disco.union(tapa).difference(hueco)
 
-    x_centro = 73.0  # columna central del personaje en el dibujo
+    zonas = personaje(cfg["escala"], cfg["y_arriba"], cfg["contorno"], cfg["entero"], cfg["detalle"])
+    zonas = {c: g.intersection(interior) for c, g in zonas.items()}
+    figura = unary_union(list(zonas.values()))
 
-    def geom(mask, ancho, area):
-        return limpiar(mascara_a_geom(mask, cfg["mm_px"], x_centro, cfg["y_arriba"]), ancho, area)
-
-    fig = []
-    for k, colores in enumerate(NIVELES):
-        g = geom(np.isin(clases, colores), 0.45 if k == 0 else 0.6, 0.5 if k == 0 else 0.7)
-        fig.append(g.intersection(interior.buffer(0.1)))
-
-    # Contornos negros: la cara y las manos son blancas como el fondo, así que se
-    # perfilan donde tocan el fondo, la camisa o el blanco de los ojos.
-    sil = geom(clases >= 0, 0.45, 0.5)
-    blanco = sil.difference(fig[0])
-    borde_fuera = sil.difference(sil.buffer(-CONTORNO)).intersection(blanco.buffer(0.05))
-    piel = mascara_a_geom(clases == PIEL, cfg["mm_px"], x_centro, cfg["y_arriba"])
-    camisa = mascara_a_geom(clases == BLANCO, cfg["mm_px"], x_centro, cfg["y_arriba"])
-    borde_dentro = piel.buffer(CONTORNO / 2).intersection(camisa.buffer(CONTORNO / 2)).intersection(sil)
-    contorno = limpiar(unary_union([borde_fuera, borde_dentro]), 0.45, 0.3).intersection(interior)
-    fig[0] = fig[0].union(contorno)
-    fig[1] = fig[1].union(contorno)
-    for k in (1, 2):
-        fig[k] = fig[k].intersection(fig[k - 1])
-    # El rojo solo donde el dibujo es rojo o tapado por negro/azul: si un trazo negro era
-    # demasiado fino y se ha quitado, no debe quedar una mancha roja en su lugar.
-    rojo = geom(clases == ROJO, 0.45, 0.5).buffer(0.3)
-    solo_rojo = fig[0].intersection(rojo.union(fig[1].buffer(0.05))).buffer(-0.2).buffer(0.2)
-    fig[0] = unary_union([p for p in poligonos(solo_rojo) if p.area >= 0.5] + [fig[1]]).buffer(0)
-    fig = [shapely.set_precision(f.buffer(0), 0.002).buffer(0) for f in fig]
-
-    adornos = [estrella(*e) for e in cfg["estrellas"]] + [Point(x, y).buffer(rr, 24) for x, y, rr in cfg["puntos"]]
-    adornos = unary_union(adornos).difference(fig[0].buffer(1.2))
+    # Marco: aro rojo, filete negro por dentro y una banda negra en la base de la anilla
+    filete = Point(0, 0).buffer(r - ARO - 0.8, 128).difference(Point(0, 0).buffer(r - ARO - 1.4, 128))
+    filete = filete.difference(figura.buffer(0.8))
+    banda = box(-10.5, r + 0.6, 10.5, r + 1.4).intersection(tapa)
+    copos = unary_union([copo(x, y, rr) for x, y, rr in cfg["copos"]]).difference(figura.buffer(1.2))
+    puntos = unary_union([Point(x, y).buffer(rr, 24) for x, y, rr in cfg["puntos"]]).difference(figura.buffer(1.2))
     aro = silueta.difference(interior)
-    nivel1 = unary_union([aro, fig[0], adornos]).buffer(0)
-    return [silueta, nivel1, fig[1], fig[2]]
+
+    rojo = unary_union([zonas["rojo"], aro, puntos])
+    negro = unary_union([zonas["negro"], filete, banda])
+    azul = unary_union([zonas["azul"], copos])
+    # Cada nivel apoya en el de debajo: el rojo lleva debajo lo negro y lo azul, y el negro lo azul
+    n3 = limpiar(azul)
+    n2 = limpiar(negro.union(n3))
+    n1 = limpiar(rojo.union(n2))
+    n2, n3 = n2.intersection(n1), n3.intersection(n2)
+    return [shapely.set_precision(g.buffer(0), 0.002).buffer(0) for g in (silueta, n1, n2, n3)]
 
 
 def vista_previa(niveles, ruta, px=12):
@@ -215,10 +160,9 @@ CAMA = 255.0  # lado de la cama de la Kobra 3, en mm
 def main():
     salida = sys.argv[1] if len(sys.argv) > 1 else os.path.join(AQUI, "salida")
     os.makedirs(salida, exist_ok=True)
-    clases = clasificar(os.path.join(AQUI, "personaje.png"))
     objetos = {}
     for nombre, cfg in VERSIONES.items():
-        niveles = construir(nombre, cfg, clases)
+        niveles = construir(nombre, cfg)
         mallas = []
         for i, geom in enumerate(niveles):
             z0 = 0 if i == 0 else BASE + (i - 1) * ESCALON

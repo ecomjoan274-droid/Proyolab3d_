@@ -25,11 +25,11 @@ El 3MF asigna las piezas a estos números de filamento. Pon los filamentos en es
 | Nº | Color | Pieza | Altura | Capas (a 0,2 mm) |
 |---|---|---|---|---|
 | 1 | Blanco | Base, cara, manos y camisa | 0 a 1,6 mm | 1 a 8 |
-| 2 | Rojo | Chaqueta, boina, aro y estrellas | 1,6 a 2,2 mm | 9 a 11 |
-| 3 | Negro | Pelo, cejas, ojos, nariz, boca, pantalón y contornos | 2,2 a 2,8 mm | 12 a 14 |
-| 4 | Azul | Corbata | 2,8 a 3,4 mm | 15 a 17 |
+| 2 | Rojo | Chaqueta, boina, labios, aro y puntos | 1,6 a 2,2 mm | 9 a 11 |
+| 3 | Negro | Pelo, cejas, ojos, contornos, pantalón, zapatos y filete del aro | 2,2 a 2,8 mm | 12 a 14 |
+| 4 | Azul | Corbata y copos de nieve | 2,8 a 3,4 mm | 15 a 17 |
 
-La cara y las manos van en blanco con un contorno negro para que se distingan del fondo.
+El personaje está dibujado a mano con curvas sobre la foto, con un contorno negro uniforme. La cara, las manos y la camisa son del blanco de la base.
 Cada color ocupa sus propias capas, así que la impresora solo cambia de filamento tres veces en toda la impresión.
 
 Al abrir el 3MF, comprueba que en la lista de filamentos del laminador el 1 es blanco, el 2 rojo, el 3 negro y el 4 azul.
@@ -48,10 +48,10 @@ Si ves el modelo solo en blanco y rojo, es que el laminador tiene esos colores p
 ## Regenerar
 
 ```
-pip install trimesh shapely mapbox-earcut opencv-python-headless manifold3d scipy pillow
+pip install trimesh shapely mapbox-earcut manifold3d pillow
 python3 generar.py
 ```
 
-- `clasificar.py` separa el dibujo `personaje.png` por colores (la piel se imprime en blanco).
-- `generar.py` construye los modelos. El diámetro, el grosor y los adornos se cambian al principio.
+- `diseno.py` tiene el dibujo del personaje (formas y trazos sobre `personaje.png`, que es solo la referencia).
+- `generar.py` construye los modelos. El diámetro, el grosor, los copos y los puntos se cambian al principio.
 - `proyecto_3mf.py` escribe el 3MF con los filamentos asignados.
