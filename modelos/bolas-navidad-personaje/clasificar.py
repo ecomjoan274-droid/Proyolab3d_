@@ -1,14 +1,14 @@
 """Separa el dibujo del personaje en 4 colores imprimibles.
 
 Devuelve un mapa de niveles por píxel:
-  -1 fuera del personaje, 0 blanco, 1 rojo, 2 piel, 3 negro
+  -1 fuera del personaje, 0 blanco, 1 rojo, 2 piel, 3 negro, 4 azul (corbata)
 """
 import colorsys
 
 import numpy as np
 from PIL import Image
 
-FUERA, BLANCO, ROJO, PIEL, NEGRO = -1, 0, 1, 2, 3
+FUERA, BLANCO, ROJO, PIEL, NEGRO, AZUL = -1, 0, 1, 2, 3, 4
 FILA_CUELLO = 126     # por encima: cabeza
 FILA_PANTALON = 264   # por debajo: pantalón, manos y zapatos
 FILA_FIN = 478        # por debajo: peana, que se descarta
@@ -48,7 +48,7 @@ def clasificar(ruta):
                 if s < 0.25 and v > 0.70:
                     c = BLANCO
                 elif b >= 0.92 * r and v < 0.75:
-                    c = NEGRO
+                    c = AZUL if (y < 216 and 38 <= x <= 108) else NEGRO  # corbata
                 elif y < FILA_CUELLO + 5 and 50 <= x <= 95:
                     c = PIEL  # sombra del cuello, no es chaqueta
                 else:
@@ -101,7 +101,8 @@ def _engordar_nariz(out):
 
 
 COLORES = {FUERA: (120, 200, 120), BLANCO: (245, 245, 245), ROJO: (200, 30, 35),
-           PIEL: (232, 160, 125), NEGRO: (25, 25, 30)}
+           PIEL: (232, 160, 125), NEGRO: (25, 25, 30),
+           AZUL: (30, 80, 190)}
 
 if __name__ == "__main__":
     import sys

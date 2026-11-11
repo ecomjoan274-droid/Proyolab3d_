@@ -4,15 +4,19 @@
 Uso: generar.py [carpeta_salida]
 
 Cada bola es un disco con anilla para colgar. El dibujo va en relieve por
-escalones, y cada escalón es de un solo color:
+escalones, y cada escalón es de un solo color (filamento):
 
-  0,0 a 1,6 mm  base    blanco
-  1,6 a 2,2 mm  nivel 1 rojo
-  2,2 a 2,8 mm  nivel 2 piel
-  2,8 a 3,4 mm  nivel 3 negro
+  0,0 a 1,6 mm  base    blanco   filamento 1
+  1,6 a 2,2 mm  nivel 1 rojo     filamento 2
+  2,2 a 2,8 mm  nivel 2 piel     filamento 3
+  2,8 a 3,4 mm  nivel 3 negro    filamento 4
+  3,4 a 4,0 mm  nivel 4 azul     filamento 5 (corbata)
 
-Así se puede imprimir con cambio de filamento por capa (una sola boquilla) o
-asignando un filamento a cada pieza (multicolor).
+Como en cada capa solo hay un color, la impresora cambia de filamento cuatro
+veces en toda la impresión y casi no gasta material en purgas.
+
+Salida: STL por color, STL de una pieza y 3MF con cada pieza ya asignada a su
+filamento (formato de proyecto de Anycubic Slicer Next / OrcaSlicer).
 """
 import math
 import os
@@ -28,6 +32,7 @@ from shapely.geometry import MultiPolygon, Point, Polygon, box
 from shapely.ops import unary_union
 
 from clasificar import clasificar
+from proyecto_3mf import escribir_3mf
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
 
@@ -36,8 +41,9 @@ ARO = 2.5            # ancho del borde en relieve
 BASE = 1.6           # grosor de la base blanca
 ESCALON = 0.6        # altura de cada color (3 capas de 0,2 mm)
 AGUJERO = 4.4        # diámetro del agujero para el hilo
-NOMBRES = ["0_base_blanco", "1_rojo", "2_piel", "3_negro"]
-COLORES = [(246, 246, 244), (200, 30, 36), (233, 164, 128), (28, 28, 32)]
+NOMBRES = ["0_base_blanco", "1_rojo", "2_piel", "3_negro", "4_azul"]
+PIEZAS = ["Base (blanco)", "Chaqueta, boina y aro (rojo)", "Cara y manos (piel)", "Pelo, ojos y pantalon (negro)", "Corbata (azul)"]
+COLORES = [(246, 246, 244), (200, 30, 36), (233, 164, 128), (28, 28, 32), (30, 80, 190)]
 
 VERSIONES = {
     # mm_px: tamaño de cada píxel del dibujo; y_arriba: altura (mm) de la fila 0
@@ -137,7 +143,7 @@ def construir(nombre, cfg, clases):
 
     x_centro = 73.0  # columna central del personaje en el dibujo
     fig = []
-    for k in (1, 2, 3):
+    for k in (1, 2, 3, 4):
         g = mascara_a_geom(clases >= k, cfg["mm_px"], x_centro, cfg["y_arriba"])
         g = limpiar(g, 0.45 if k < 3 else 0.6, 0.5 if k < 3 else 0.7)
         fig.append(g.intersection(interior.buffer(0.1)))
@@ -146,16 +152,16 @@ def construir(nombre, cfg, clases):
     blanco = sil.difference(fig[0])
     cierre = sil.difference(sil.buffer(-0.7)).intersection(blanco.buffer(0.05))
     cierre = limpiar(cierre, 0.4, 0.3).intersection(interior)
-    fig = [f.union(cierre) for f in fig]
-    fig[1] = fig[1].intersection(fig[0])
-    fig[2] = fig[2].intersection(fig[1])
+    fig[:3] = [f.union(cierre) for f in fig[:3]]
+    for k in (1, 2, 3):
+        fig[k] = fig[k].intersection(fig[k - 1])
     fig = [shapely.set_precision(f.buffer(0), 0.002).buffer(0) for f in fig]
 
     adornos = [estrella(*e) for e in cfg["estrellas"]] + [Point(x, y).buffer(rr, 24) for x, y, rr in cfg["puntos"]]
     adornos = unary_union(adornos).difference(fig[0].buffer(1.2))
     aro = silueta.difference(interior)
     nivel1 = unary_union([aro, fig[0], adornos]).buffer(0)
-    return [silueta, nivel1, fig[1], fig[2]]
+    return [silueta, nivel1, fig[1], fig[2], fig[3]]
 
 
 def vista_previa(niveles, ruta, px=12):
@@ -183,10 +189,15 @@ def vista_previa(niveles, ruta, px=12):
     img.save(ruta)
 
 
+TITULOS = {"busto": "Bola Tirisiti busto", "cuerpo_entero": "Bola Tirisiti cuerpo entero"}
+CAMA = 255.0  # lado de la cama de la Kobra 3, en mm
+
+
 def main():
     salida = sys.argv[1] if len(sys.argv) > 1 else os.path.join(AQUI, "salida")
     os.makedirs(salida, exist_ok=True)
     clases = clasificar(os.path.join(AQUI, "personaje.png"))
+    objetos = {}
     for nombre, cfg in VERSIONES.items():
         niveles = construir(nombre, cfg, clases)
         mallas = []
@@ -203,6 +214,17 @@ def main():
         print(f"{nombre} completa: {len(entera.faces)} triángulos, cerrada={entera.is_watertight}, "
               f"medidas {np.round(entera.extents, 1)} mm")
         vista_previa(niveles, os.path.join(salida, f"bola_{nombre}_vista.png"))
+
+        piezas = [(PIEZAS[i], m, i + 1) for i, m in enumerate(mallas)]
+        objetos[nombre] = piezas
+        escribir_3mf(os.path.join(salida, f"bola_{nombre}_multicolor.3mf"),
+                     [dict(nombre=TITULOS[nombre], posicion=(CAMA / 2, CAMA / 2), piezas=piezas)])
+
+    # Las dos bolas en la misma placa: comparten los cambios de color
+    escribir_3mf(os.path.join(salida, "bolas_tirisiti_multicolor.3mf"), [
+        dict(nombre=TITULOS["busto"], posicion=(CAMA / 2 - 55, CAMA / 2), piezas=objetos["busto"]),
+        dict(nombre=TITULOS["cuerpo_entero"], posicion=(CAMA / 2 + 55, CAMA / 2), piezas=objetos["cuerpo_entero"]),
+    ])
 
 
 if __name__ == "__main__":
