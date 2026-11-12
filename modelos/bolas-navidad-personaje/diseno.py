@@ -115,14 +115,12 @@ def cabeza(L, detalle):
     # Nariz larga: un lado y la base
     L.trazo([(310, 290), (316, 318), (322, 342)], L.w * 0.8)
     L.trazo([(266, 350), (292, 358), (324, 348)], L.w)
-    # Boca sonriente: comisuras hacia arriba y hoyuelos
-    sonrisa = [(250, 396), (270, 407), (290, 411), (310, 407), (330, 396)]
+    # Boca: labios rojos con el arco del labio de arriba y una línea que sube en las comisuras
+    sonrisa = [(247, 396), (257, 402), (272, 405.5), (290, 407), (308, 405.5), (323, 402), (333, 396)]
     if detalle:
-        L.forma([(250, 396), (270, 400), (290, 404), (310, 400), (330, 396), (314, 418), (290, 427),
-                 (266, 418)], "rojo", contorno=False)
-        L.trazo(sonrisa, L.w * 0.7)
-        L.trazo([(240, 386), (246, 396), (252, 404)], TRAZO_MIN)
-        L.trazo(espejo([(240, 386), (246, 396), (252, 404)]), TRAZO_MIN)
+        L.forma([(248, 398), (262, 392), (277, 389), (290, 394), (303, 389), (318, 392), (332, 398),
+                 (320, 413), (290, 427), (260, 413)], "rojo", contorno=False)
+        L.trazo(sonrisa, TRAZO_MIN)
     else:
         L.trazo(sonrisa, L.w * 1.4)
 
