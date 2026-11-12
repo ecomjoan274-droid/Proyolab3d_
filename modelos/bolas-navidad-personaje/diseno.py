@@ -96,33 +96,35 @@ def cabeza(L, detalle):
     L.forma([(162, 262), (166, 205), (190, 150), (240, 128), (292, 152), (342, 126), (392, 140),
              (418, 190), (424, 262), (418, 360), (402, 425), (368, 475), (300, 500), (240, 492),
              (200, 450), (176, 390)], "blanco")
-    # Cejas, gruesas y caídas hacia fuera
-    ceja = [(176, 238), (192, 200), (230, 180), (270, 178), (276, 196), (238, 200), (205, 214), (186, 240)]
+    # Cejas gruesas pero relajadas: bajas y casi rectas, con el extremo de dentro sin subir
+    ceja = [(180, 226), (198, 204), (230, 194), (264, 196), (272, 208), (236, 208), (206, 214), (188, 230)]
     L.forma(ceja, "negro", contorno=False)
     L.forma(espejo(ceja), "negro", contorno=False)
-    # Ojos
-    ojo = [(184, 250), (201, 225), (230, 216), (260, 225), (275, 247), (256, 267), (228, 273), (198, 266)]
+    # Ojos tranquilos: el párpado de arriba tapa un poco la pupila (sin blanco por encima)
+    ojo = [(184, 252), (202, 236), (230, 230), (260, 236), (276, 252), (256, 264), (228, 268), (198, 263)]
     for pts, px in ((ojo, 234), (espejo(ojo), 346)):
+        blanco_ojo = L.forma(pts, "blanco", contorno=False)
         if detalle:
-            # Mucho blanco, pupila pequeña y párpados finos para que el ojo no se vea negro
-            L.forma(pts, "blanco", contorno=False)
-            L.circulo(px, 248, 14, "negro")
-            L.circulo(px + 5, 242, 5, "blanco")       # brillo
-            L.trazo(pts[:5], L.w)                     # párpado de arriba
+            (cx, cy), = L.mm([(px, 246)])
+            L.pintar(Point(cx, cy).buffer(16 * L.s, 32).intersection(blanco_ojo), "negro")
+            L.circulo(px + 5, 244, 4.5, "blanco")     # brillo
+            L.trazo(pts[:5], L.w * 1.2)               # párpado de arriba
             L.trazo(pts[4:] + pts[:1], TRAZO_MIN)     # párpado de abajo, fino
         else:
-            L.circulo(px, 248, 20, "negro")
+            L.circulo(px, 250, 19, "negro")
     # Nariz larga: un lado y la base
     L.trazo([(310, 290), (316, 318), (322, 342)], L.w * 0.8)
     L.trazo([(266, 350), (292, 358), (324, 348)], L.w)
-    # Boca
-    labios = [(252, 406), (272, 392), (290, 398), (308, 392), (328, 406), (310, 420), (290, 424), (270, 420)]
+    # Boca sonriente: comisuras hacia arriba y hoyuelos
+    sonrisa = [(250, 396), (270, 407), (290, 411), (310, 407), (330, 396)]
     if detalle:
-        L.forma(labios, "rojo", contorno=False)
-        L.trazo([(254, 406), (290, 409), (326, 406)], L.w * 0.7)
+        L.forma([(250, 396), (270, 400), (290, 404), (310, 400), (330, 396), (314, 418), (290, 427),
+                 (266, 418)], "rojo", contorno=False)
+        L.trazo(sonrisa, L.w * 0.7)
+        L.trazo([(240, 386), (246, 396), (252, 404)], TRAZO_MIN)
+        L.trazo(espejo([(240, 386), (246, 396), (252, 404)]), TRAZO_MIN)
     else:
-        L.forma(labios, "negro", contorno=False)
-
+        L.trazo(sonrisa, L.w * 1.4)
 
 def torso(L, entero, detalle):
     abajo = 1070 if entero else 1500
