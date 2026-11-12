@@ -101,15 +101,17 @@ def cabeza(L, detalle):
     L.forma(ceja, "negro", contorno=False)
     L.forma(espejo(ceja), "negro", contorno=False)
     # Ojos
-    ojo = [(186, 250), (203, 228), (231, 220), (259, 228), (273, 247), (255, 264), (228, 270), (199, 263)]
+    ojo = [(184, 250), (201, 225), (230, 216), (260, 225), (275, 247), (256, 267), (228, 273), (198, 266)]
     for pts, px in ((ojo, 234), (espejo(ojo), 346)):
         if detalle:
-            L.forma(pts, "blanco")
-            L.circulo(px, 246, 21, "negro")
-            L.circulo(px + 6, 238, 6.5, "blanco")   # brillo
-            L.trazo(pts[:5], L.w * 1.4)              # párpado de arriba más grueso
+            # Mucho blanco, pupila pequeña y párpados finos para que el ojo no se vea negro
+            L.forma(pts, "blanco", contorno=False)
+            L.circulo(px, 248, 14, "negro")
+            L.circulo(px + 5, 242, 5, "blanco")       # brillo
+            L.trazo(pts[:5], L.w)                     # párpado de arriba
+            L.trazo(pts[4:] + pts[:1], TRAZO_MIN)     # párpado de abajo, fino
         else:
-            L.circulo(px, 246, 26, "negro")
+            L.circulo(px, 248, 20, "negro")
     # Nariz larga: un lado y la base
     L.trazo([(310, 290), (316, 318), (322, 342)], L.w * 0.8)
     L.trazo([(266, 350), (292, 358), (324, 348)], L.w)
