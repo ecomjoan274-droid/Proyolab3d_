@@ -16,3 +16,7 @@ Carpeta de trabajo (`$PROTOLAB_WORKDIR`): `media/` con los clips de Drive, `foto
 6. Con su gorro rojo, su corbata azul y copos de nieve.
 7. El regalo perfecto para quien está fuera y echa de menos Alcoi.
 8. ¿Quieres la tuya? Escríbeme por mensaje.
+
+## Portada
+
+`portada.py foto.jpg salida.jpg [Anton-Regular.ttf]` crea la portada 9:16 con el mismo estilo que la de la primera bola: "PROTOLAB" arriba y "¿ERES DE ALCOI? / ESTO ES PARA TI" abajo. La foto es el fotograma 4,0 s de `20261113_063745.mp4`. La fuente es Anton, de Google Fonts.
