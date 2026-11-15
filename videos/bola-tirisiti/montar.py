@@ -3,7 +3,7 @@
 
 Uso: montar.py [salida.mp4]
 Espera en $PROTOLAB_WORKDIR:
-  media/  foto_bola.jpg (foto de la bola impresa) y bola_busto_vista.png (render del diseño)
+  media/  clips de Drive (20261112_*.mp4, 20261113_*.mp4) y foto_bola.jpg (foto de la bola en la mano)
   voz/    a1.ogg ... a5.ogg (notas de voz en orden)
   build/  temporales
 """
@@ -20,24 +20,24 @@ S = os.environ.get(
 M, V, B = f"{S}/media", f"{S}/voz", f"{S}/build"
 FONT = "/usr/share/fonts/opentype/inter/Inter-ExtraBold.otf"
 W, H, FPS = 1080, 1920, 30
-FONDO_RENDER = "0xE1E6E3"  # mismo gris claro que el fondo del render
 
-# Planos: (imagen, duración, zoom inicial, zoom final, centro x, centro y (0-1 en la imagen), texto, y del texto)
+# Planos: (fuente, inicio en el clip, duración en el vídeo, velocidad, texto en pantalla)
 SEG = [
-    ("foto_bola.jpg", 3.0, 2.10, 2.35, 0.50, 0.42, "El Tirisiti\nen tu árbol de Navidad", 170),
-    ("bola_busto_vista.png", 3.0, 1.00, 1.06, 0.50, 0.50, "Diseñada por mí\nen 3D", 170),
-    ("foto_bola.jpg", 3.0, 2.60, 2.30, 0.36, 0.47, "Impresa a 4 colores\nsin pintar nada", 170),
-    ("foto_bola.jpg", 3.0, 2.00, 1.75, 0.52, 0.55, "Anycubic Kobra 3\ncon ACE Pro", 170),
-    ("foto_bola.jpg", 3.6, 1.00, 1.08, 0.50, 0.45, "¿Quieres la tuya?\nEscríbeme por mensaje", 250),
+    ("20261113_063745.mp4", 2.6, 2.8, 1.0, "El Tirisiti\nen tu árbol de Navidad"),
+    ("20261112_214651.mp4", 2.2, 2.5, 1.0, "Impresa en 3D\ncon mi Anycubic Kobra 3"),
+    ("20261112_233212.mp4", 0.5, 2.7, 3.0, "Capa a capa\na 4 colores"),
+    ("20261112_233212.mp4", 17.0, 2.6, 1.0, "Sin pintar nada"),
+    ("20261113_063822.mp4", 5.5, 3.0, 2.0, "Recién salidas\nde la impresora"),
+    ("foto_bola.jpg", 0, 3.6, 1.0, "¿Quieres la tuya?\nEscríbeme por mensaje"),
 ]
 
 # Voz: (archivo, inicio de la voz en la nota, fin de la voz, segundo del vídeo donde entra)
 VOZ = [
-    ("a1.ogg", 0.50, 2.85, 0.35),
-    ("a2.ogg", 0.20, 2.75, 3.25),
-    ("a3.ogg", 0.45, 2.45, 6.40),
-    ("a4.ogg", 0.10, 2.45, 9.30),
-    ("a5.ogg", 0.30, 2.70, 12.30),
+    ("a1.ogg", 0.50, 2.85, 0.30),
+    ("a2.ogg", 0.20, 2.75, 3.00),
+    ("a3.ogg", 0.45, 2.45, 5.80),
+    ("a4.ogg", 0.10, 2.45, 8.60),
+    ("a5.ogg", 0.30, 2.70, 13.80),
 ]
 OBJETIVO_LUFS = -14.0  # volumen estándar de Reels / TikTok
 
@@ -57,22 +57,23 @@ def txtfilter(i, text, y):
     )
 
 
-def render(i, src, dur, z0, z1, cx, cy, text, ty):
+def render(i, src, ss, dur, speed, text):
     out = f"{B}/seg{i}.mp4"
     n = int(round(dur * FPS))
     look = "eq=brightness=0.03:contrast=1.06:saturation=1.15"
-    if src.endswith(".png"):
-        # render cuadrado: se centra sobre un fondo vertical del mismo color
-        base = f"scale={W*2}:-1,pad={W*2}:{H*2}:0:(oh-ih)/2:color={FONDO_RENDER}"
-        look = "null"
+    if src.endswith(".jpg"):
+        vf = (
+            f"scale={W*2}:{H*2}:force_original_aspect_ratio=increase,crop={W*2}:{H*2},"
+            f"zoompan=z='1+0.0009*on':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':d={n}:s={W}x{H}:fps={FPS},"
+            f"{look},{txtfilter(i, text, 250)}"
+        )
+        cmd = ["ffmpeg", "-y", "-v", "error", "-loop", "1", "-i", f"{M}/{src}", "-t", str(dur)]
     else:
-        base = f"scale={W*2}:{H*2}:force_original_aspect_ratio=increase,crop={W*2}:{H*2}"
-    z = f"({z0}+({z1}-{z0})*on/{n})"
-    vf = (
-        f"{base},zoompan=z='{z}':x='max(0,min(iw-iw/zoom,{cx}*iw-iw/zoom/2))':"
-        f"y='max(0,min(ih-ih/zoom,{cy}*ih-ih/zoom/2))':d={n}:s={W}x{H}:fps={FPS},"
-        f"{look},{txtfilter(i, text, ty)}"
-    )
+        vf = (
+            f"setpts=PTS/{speed},fps={FPS},scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},"
+            f"{look},{txtfilter(i, text, 250)}"
+        )
+        cmd = ["ffmpeg", "-y", "-v", "error", "-ss", str(ss), "-t", str(dur * speed + 0.2), "-i", f"{M}/{src}"]
     if i == 0:
         vf += ",fade=t=in:st=0:d=0.3"
     if i == len(SEG) - 1:
@@ -81,9 +82,9 @@ def render(i, src, dur, z0, z1, cx, cy, text, ty):
             f"borderw=6:bordercolor=0x0b6e5f:alpha='min(1,max(0,(t-0.5)/0.4))',"
             f"fade=t=out:st={dur-0.6}:d=0.6"
         )
-    run(["ffmpeg", "-y", "-v", "error", "-loop", "1", "-i", f"{M}/{src}", "-t", str(dur), "-vf", vf,
-         "-an", "-frames:v", str(n), "-c:v", "libx264", "-preset", "medium", "-crf", "18",
-         "-pix_fmt", "yuv420p", "-r", str(FPS), out])
+    cmd += ["-vf", vf, "-an", "-frames:v", str(n), "-c:v", "libx264", "-preset", "medium", "-crf", "18",
+            "-pix_fmt", "yuv420p", "-r", str(FPS), out]
+    run(cmd)
     return out
 
 
@@ -136,7 +137,7 @@ def main():
     salida = sys.argv[1] if len(sys.argv) > 1 else f"{S}/reel_bola_tirisiti.mp4"
     os.makedirs(B, exist_ok=True)
     segs = [render(i, *s) for i, s in enumerate(SEG)]
-    total = round(sum(s[1] for s in SEG), 2)
+    total = round(sum(s[2] for s in SEG), 2)
     lst = f"{B}/list.txt"
     with open(lst, "w") as f:
         f.write("".join(f"file '{p}'\n" for p in segs))
