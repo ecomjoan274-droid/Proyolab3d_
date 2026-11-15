@@ -4,7 +4,7 @@
 Uso: montar.py [salida.mp4]
 Espera en $PROTOLAB_WORKDIR:
   media/  clips de Drive (20261112_*.mp4, 20261113_*.mp4) y foto_bola.jpg (foto de la bola en la mano)
-  voz/    a1.ogg ... a5.ogg (notas de voz en orden)
+  voz/    a1.ogg ... a8.ogg (notas de voz en orden)
   build/  temporales
 """
 import json
@@ -23,21 +23,26 @@ W, H, FPS = 1080, 1920, 30
 
 # Planos: (fuente, inicio en el clip, duración en el vídeo, velocidad, texto en pantalla)
 SEG = [
-    ("20261113_063745.mp4", 2.6, 2.8, 1.0, "El Tirisiti\nen tu árbol de Navidad"),
-    ("20261112_214651.mp4", 2.2, 2.5, 1.0, "Impresa en 3D\ncon mi Anycubic Kobra 3"),
-    ("20261112_233212.mp4", 0.5, 2.7, 3.0, "Capa a capa\na 4 colores"),
-    ("20261112_233212.mp4", 17.0, 2.6, 1.0, "Sin pintar nada"),
+    ("20261113_063745.mp4", 2.6, 3.0, 1.0, "El Tirisiti\nen tu árbol de Navidad"),
+    ("20261112_214651.mp4", 2.2, 3.0, 1.0, "Impresa en 3D\ncon mi Anycubic Kobra 3"),
+    ("20261112_214651.mp4", 8.5, 3.0, 1.0, "Primero la base"),
+    ("20261112_233212.mp4", 0.5, 3.0, 3.0, "Capa a capa\na 4 colores"),
+    ("20261112_233212.mp4", 33.0, 3.0, 1.0, "Detalle a detalle"),
+    ("20261112_233212.mp4", 17.0, 3.0, 1.0, "Sin pintar nada"),
     ("20261113_063822.mp4", 5.5, 3.0, 2.0, "Recién salidas\nde la impresora"),
-    ("foto_bola.jpg", 0, 3.6, 1.0, "¿Quieres la tuya?\nEscríbeme por mensaje"),
+    ("foto_bola.jpg", 0, 4.0, 1.0, "¿Quieres la tuya?\nEscríbeme por mensaje"),
 ]
 
 # Voz: (archivo, inicio de la voz en la nota, fin de la voz, segundo del vídeo donde entra)
 VOZ = [
-    ("a1.ogg", 0.50, 2.85, 0.30),
-    ("a2.ogg", 0.20, 2.75, 3.00),
-    ("a3.ogg", 0.45, 2.45, 5.80),
-    ("a4.ogg", 0.10, 2.45, 8.60),
-    ("a5.ogg", 0.30, 2.70, 13.80),
+    ("a1.ogg", 0.15, 2.40, 0.20),
+    ("a2.ogg", 0.25, 3.15, 3.10),
+    ("a3.ogg", 0.45, 2.70, 6.25),
+    ("a4.ogg", 0.40, 2.90, 9.20),
+    ("a5.ogg", 0.15, 2.75, 12.20),
+    ("a6.ogg", 0.40, 2.55, 15.30),
+    ("a7.ogg", 0.10, 2.55, 18.25),
+    ("a8.ogg", 0.25, 2.75, 21.30),
 ]
 OBJETIVO_LUFS = -14.0  # volumen estándar de Reels / TikTok
 
