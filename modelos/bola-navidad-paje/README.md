@@ -1,32 +1,34 @@
-# Bola de Navidad plana con el paje
+# Adorno de Navidad del paje
 
-Mismo formato que las bolas del Tirisiti (`../bolas-navidad-personaje`): adorno plano de 80 mm de diámetro (89,5 mm con la anilla) y 3,4 mm de grosor, en 4 colores (uno por cada hueco del ACE Pro).
+Copia de la pieza de la foto `referencia.jpg` (la de arriba): silueta del paje con fez, sin disco ni marco.
+Donde en la foto sale el cordón hay un **agujero de 4 mm** para pasarlo.
 
-El paje sigue la foto `referencia.jpg`: cara redonda, fez rojo con borla negra, ojos redondos blancos con la pupila en el centro y sonrisa roja con una raya negra.
-
-Vista previa: `salida/bola_paje_vista.png`.
+- Medidas: 59,8 x 80 mm y 3 mm de grosor.
+- Vista previa: `salida/paje_vista.png`.
 
 ## Archivos (carpeta `salida/`)
 
 | Archivo | Para qué |
 |---|---|
-| `bola_paje_multicolor.3mf` | La bola con cada pieza ya asignada a su filamento. |
-| `bola_paje_0_base_blanco.stl` … `_3_azul.stl` | Una pieza por color, por si el 3MF no se abre bien. |
-| `bola_paje_completa.stl` | Una sola pieza, para cambio de filamento por capa. |
+| `paje_multicolor.3mf` | La pieza con cada parte ya asignada a su filamento. |
+| `paje_0_base_negro.stl` … `paje_3_borla_negro.stl` | Una pieza por parte, por si el 3MF no se abre bien. |
 
-## Filamentos
+## Capas y filamentos
 
-Los mismos que el Tirisiti y en el mismo orden, así que se pueden imprimir juntas sin tocar el ACE Pro:
+Mismo orden de filamentos que el Tirisiti (1 blanco, 2 rojo, 3 negro, 4 azul; el azul no se usa):
 
-| Nº | Color | Pieza | Altura | Capas (a 0,2 mm) |
-|---|---|---|---|---|
-| 1 | Blanco | Base y ojos | 0 a 1,6 mm | 1 a 8 |
-| 2 | Rojo | Fez, sonrisa, aro y puntos | 1,6 a 2,2 mm | 9 a 11 |
-| 3 | Negro | Cara, borla, pupilas, contornos y filete del aro | 2,2 a 2,8 mm | 12 a 14 |
-| 4 | Azul | Copos de nieve | 2,8 a 3,4 mm | 15 a 17 |
+| Parte | Filamento | Altura | Capas (a 0,2 mm) |
+|---|---|---|---|
+| Silueta y cara | 3 negro | 0 a 1,6 mm | 1 a 8 |
+| Fez y sonrisa | 2 rojo | 1,6 a 2,4 mm | 9 a 12 |
+| Ojos | 1 blanco | 1,6 a 2,4 mm | 9 a 12 |
+| Borla | 3 negro | 2,4 a 3,0 mm | 13 a 15 |
 
-Los ojos son huecos en la cara que dejan ver el blanco de la base; la sonrisa queda un escalón por debajo de la cara.
-Los ajustes de Anycubic Slicer Next son los mismos que los del Tirisiti (ver su README).
+- El centro de los ojos y la raya de la boca son huecos: se ve el negro de la cara, como en la foto.
+- El fez, la boca y los ojos están en relieve sobre la cara; la borla, en relieve sobre el fez.
+- En las capas 9 a 12 hay rojo y blanco a la vez, así que ahí la impresora cambia de filamento en cada capa.
+
+Ajustes de Anycubic Slicer Next: los mismos que el Tirisiti (proceso 0,20 mm Standard, sin soportes, relieve hacia arriba). Para cambiar el tamaño, escala solo X e Y.
 
 ## Regenerar
 
@@ -35,5 +37,4 @@ pip install trimesh shapely mapbox-earcut manifold3d pillow
 python3 generar.py
 ```
 
-- `dibujo_paje.py` tiene el dibujo (medidas en mm: cara, fez, borla, ojos y sonrisa al principio).
-- `generar.py` construye la bola usando las piezas del generador del Tirisiti; los copos y los puntos se cambian al principio.
+En `generar.py` están las medidas tomadas sobre la foto (en píxeles) y, al principio, la altura total (`ALTO`), el diámetro del agujero y el grosor de cada capa. Usa las utilidades de `../bolas-navidad-personaje` para extruir y escribir el 3MF.
