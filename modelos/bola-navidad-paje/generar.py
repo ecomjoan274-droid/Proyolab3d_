@@ -66,6 +66,12 @@ def simetrico(mitad):
     return list(mitad) + izq
 
 
+# Sonrisa (píxeles de la foto)
+BOCA_R, BOCA_Y = 146, 645.5      # radio del arco y punto más bajo del centro de la banda
+BOCA_ARCO, BOCA_GROSOR = 38.5, 54  # medio ángulo de la banda (grados) y su grosor
+RAYA_ARCO, RAYA_GROSOR = 35.5, 7.5  # medio ángulo y grosor de la raya hueca
+
+
 def dibujo():
     # Cara: círculo
     (cx, cy), = mm([(0, 562)])
@@ -92,15 +98,14 @@ def dibujo():
         ojos.append(Point(ox, oy).buffer(40 * S, 96).difference(Point(ox, oy).buffer(16.5 * S, 64)))
     ojos = unary_union(ojos)
 
-    # Sonrisa: media luna gruesa con las puntas redondas y una raya hueca en medio
-    # puntas: semicírculos centrados en (±95, 615), girados según la inclinación de la boca
-    punta = [(95 + 28 * math.cos(math.radians(a)), 615 + 28 * math.sin(math.radians(a)))
-             for a in np.linspace(-113, 67, 13)]
-    boca = forma(simetrico([(0, 618), (22, 614), (46, 607), (70, 596)] + punta +
-                           [(84, 650), (70, 657), (46, 667), (22, 672), (0, 673)]))
-    raya = [(-90, 618), (-70, 625), (-46, 637), (-22, 643), (0, 645.5), (22, 643), (46, 637),
-            (70, 625), (90, 618)]
-    raya = LineString(curva(mm(raya), cerrada=False)).buffer(3.6 * S, cap_style=1)
+    # Sonrisa: banda de grosor constante que sigue un arco, con las puntas redondas, y una raya
+    # hueca por el centro del mismo arco. Medido en la foto: el centro de la banda cae en un
+    # círculo de radio 138-150 px (la foto está algo girada) con el punto más bajo en y = 645,5; la banda mide 54 px de grueso.
+    def arco_sonrisa(grados):
+        return LineString(mm([(BOCA_R * math.sin(math.radians(a)), BOCA_Y - BOCA_R + BOCA_R * math.cos(math.radians(a)))
+                              for a in np.linspace(-grados, grados, 121)]))
+    boca = arco_sonrisa(BOCA_ARCO).buffer(BOCA_GROSOR / 2 * S, 64, cap_style=1)
+    raya = arco_sonrisa(RAYA_ARCO).buffer(RAYA_GROSOR / 2 * S, 32, cap_style=1)
     boca = boca.difference(raya)
 
     silueta = unary_union([cara, fez]).difference(hueco)
