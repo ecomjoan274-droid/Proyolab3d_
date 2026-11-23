@@ -10,7 +10,7 @@ Donde en la foto sale el cordón hay un **agujero de 4 mm** para pasarlo.
 
 | Archivo | Para qué |
 |---|---|
-| `paje_multicolor.3mf` | La pieza con cada parte ya asignada a su filamento. |
+| `paje_multicolor.3mf` | La pieza con cada parte asignada a su filamento y los ajustes de impresión dentro. |
 | `paje_0_base_negro.stl` … `paje_3_borla_negro.stl` | Una pieza por parte, por si el 3MF no se abre bien. |
 
 ## Capas y filamentos
@@ -28,7 +28,22 @@ Mismo orden de filamentos que el Tirisiti (1 blanco, 2 rojo, 3 negro, 4 azul; el
 - El fez, la boca y los ojos están en relieve sobre la cara; la borla, en relieve sobre el fez.
 - En las capas 9 a 12 hay rojo y blanco a la vez, así que ahí la impresora cambia de filamento en cada capa.
 
-Ajustes de Anycubic Slicer Next: los mismos que el Tirisiti (proceso 0,20 mm Standard, sin soportes, relieve hacia arriba). Para cambiar el tamaño, escala solo X e Y.
+## Ajustes de impresión (ya van dentro del 3MF)
+
+`paje_multicolor.3mf` lleva la impresora, el proceso y los filamentos, sacados de los perfiles oficiales de Anycubic en OrcaSlicer (carpeta `../perfiles-anycubic`):
+
+- **Impresora:** Anycubic Kobra 3 V2 0.4 nozzle, cama Textured PEI a 60 °C.
+- **Proceso:** 0.20mm Standard @Anycubic Kobra 3 V2 0.4 nozzle, con estos cambios para esta pieza:
+  - capa de 0,2 mm, también la primera (cada color cae justo en su capa);
+  - relleno al 100 % (pieza de 3 mm, maciza para que no se doble);
+  - sin borde (brim);
+  - torre de purga activada, a la derecha de la pieza;
+  - perímetro exterior y superficie de arriba a 100 mm/s, para que los detalles salgan limpios;
+  - costura atrás, en lo alto del fez.
+- **Filamentos:** los 4 con el perfil Anycubic PLA (210 °C, 220 °C en la primera capa). Sirve también para el rojo Elegoo y el azul eSUN.
+
+Al abrirlo, el laminador puede preguntar si quieres cargar los ajustes del proyecto: di que sí.
+Comprueba que los filamentos del laminador coinciden con los huecos del ACE Pro (1 blanco, 2 rojo, 3 negro, 4 azul).
 
 ## Regenerar
 

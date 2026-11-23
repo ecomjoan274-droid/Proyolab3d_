@@ -31,6 +31,9 @@ sys.path.append(TIRISITI)
 from diseno import curva  # noqa: E402
 from proyecto_3mf import escribir_3mf  # noqa: E402
 
+sys.path.append(os.path.join(AQUI, "..", "perfiles-anycubic"))
+from kobra3v2 import ajustes_proyecto  # noqa: E402
+
 # Utilidades de extrusión del generador del Tirisiti (se carga con otro nombre: este también se llama generar)
 _spec = importlib.util.spec_from_file_location("generar_tirisiti", os.path.join(TIRISITI, "generar.py"))
 _tirisiti = importlib.util.module_from_spec(_spec)
@@ -158,6 +161,22 @@ def vista_previa(niveles, ruta, px=14):
 
 CAMA = 255.0
 
+# Colores de los filamentos en el orden del ACE Pro (1 blanco, 2 rojo, 3 negro, 4 azul)
+COLORES_ACE = ["#FFFFFF", "#C12E1F", "#161616", "#1E50BE"]
+
+# Cambios sobre el perfil "0.20mm Standard @Anycubic Kobra 3 V2 0.4 nozzle" para esta pieza
+PROCESO = {
+    "layer_height": "0.2",                 # cada color cae justo en su capa (1,6 y 2,4 mm)
+    "initial_layer_print_height": "0.2",
+    "sparse_infill_density": "100%",       # pieza de 3 mm: maciza para que no se doble
+    "sparse_infill_pattern": "zig-zag",
+    "brim_type": "no_brim",                # pieza plana y ancha: no necesita borde
+    "enable_prime_tower": "1",             # purga los cambios de color fuera de la pieza
+    "outer_wall_speed": "100",             # contornos limpios en los detalles pequeños
+    "top_surface_speed": "100",
+    "seam_position": "back",               # la costura, en la parte de arriba del fez
+}
+
 
 def main():
     salida = sys.argv[1] if len(sys.argv) > 1 else os.path.join(AQUI, "salida")
@@ -173,8 +192,12 @@ def main():
     x0, y0, x1, y1 = niveles[0].bounds
     print(f"medidas: {x1 - x0:.1f} x {y1 - y0:.1f} x {BASE + PIEZAS_ALTO + BORLA_ALTO:.1f} mm")
     vista_previa(niveles, os.path.join(salida, "paje_vista.png"))
+    # La pieza va centrada en la cama y la torre de purga a su derecha
+    cx, cy = (x0 + x1) / 2, (y0 + y1) / 2
+    centradas = [(n, m.copy().apply_translation((-cx, -cy, 0)), f) for n, m, f in piezas]
     escribir_3mf(os.path.join(salida, "paje_multicolor.3mf"),
-                 [dict(nombre="Adorno paje", posicion=(CAMA / 2, CAMA / 2), piezas=piezas)])
+                 [dict(nombre="Adorno paje", posicion=(CAMA / 2, CAMA / 2), piezas=centradas)],
+                 ajustes=ajustes_proyecto(COLORES_ACE, PROCESO, torre=(CAMA / 2 + 55, CAMA / 2 - 20)))
 
 
 if __name__ == "__main__":

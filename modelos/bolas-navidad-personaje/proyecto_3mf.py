@@ -4,8 +4,11 @@ con cada pieza ya asignada a su filamento.
 El formato sigue lo que escribe y lee el propio laminador
 (src/libslic3r/Format/bbs_3mf.cpp): un modelo principal con objetos compuestos,
 las mallas en 3D/Objects/*.model y los filamentos en Metadata/model_settings.config.
-No se guarda impresora ni perfil: el laminador conserva los que tengas elegidos.
+Si se pasan `ajustes`, también se guardan la impresora, el proceso y los
+filamentos en Metadata/project_settings.config; si no, el laminador conserva
+los que tengas elegidos.
 """
+import json
 import uuid
 import zipfile
 from xml.sax.saxutils import quoteattr
@@ -52,11 +55,12 @@ def _malla_xml(malla):
     return "".join(lineas)
 
 
-def escribir_3mf(ruta, objetos):
+def escribir_3mf(ruta, objetos, ajustes=None):
     """objetos: lista de dicts con
          nombre:   nombre del objeto
          posicion: (x, y) del centro sobre la cama, en mm
          piezas:   lista de (nombre_pieza, malla_trimesh, numero_de_filamento)
+    ajustes: dict con la configuración del proyecto (impresora, proceso y filamentos), opcional
     """
     rels_raiz = ('<?xml version="1.0" encoding="UTF-8"?>\n'
                  '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">\n'
@@ -65,7 +69,7 @@ def escribir_3mf(ruta, objetos):
 
     principal = _cabecera(True) + " <resources>\n"
     construccion = f' <build p:UUID="{_uuid(ruta, "build")}">\n'
-    ajustes = '<?xml version="1.0" encoding="UTF-8"?>\n<config>\n'
+    ajustes_xml = '<?xml version="1.0" encoding="UTF-8"?>\n<config>\n'
     rels_modelo = ('<?xml version="1.0" encoding="UTF-8"?>\n'
                    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">\n')
     submodelos = {}
@@ -100,21 +104,21 @@ def escribir_3mf(ruta, objetos):
         construccion += (f'  <item objectid="{id_objeto}" p:UUID="{_uuid(ruta, n, "item")}" '
                          f'transform="1 0 0 0 1 0 0 0 1 {x:g} {y:g} 0" printable="1"/>\n')
 
-        ajustes += f'  <object id="{id_objeto}">\n'
-        ajustes += f'    <metadata key="name" value={quoteattr(obj["nombre"])}/>\n'
-        ajustes += '    <metadata key="extruder" value="1"/>\n'
+        ajustes_xml += f'  <object id="{id_objeto}">\n'
+        ajustes_xml += f'    <metadata key="name" value={quoteattr(obj["nombre"])}/>\n'
+        ajustes_xml += '    <metadata key="extruder" value="1"/>\n'
         for i, (nombre_pieza, _, filamento) in zip(ids, obj["piezas"]):
-            ajustes += f'    <part id="{i}" subtype="normal_part">\n'
-            ajustes += f'      <metadata key="name" value={quoteattr(nombre_pieza)}/>\n'
-            ajustes += f'      <metadata key="matrix" value="{IDENTIDAD}"/>\n'
-            ajustes += f'      <metadata key="extruder" value="{filamento}"/>\n'
-            ajustes += "    </part>\n"
-        ajustes += "  </object>\n"
+            ajustes_xml += f'    <part id="{i}" subtype="normal_part">\n'
+            ajustes_xml += f'      <metadata key="name" value={quoteattr(nombre_pieza)}/>\n'
+            ajustes_xml += f'      <metadata key="matrix" value="{IDENTIDAD}"/>\n'
+            ajustes_xml += f'      <metadata key="extruder" value="{filamento}"/>\n'
+            ajustes_xml += "    </part>\n"
+        ajustes_xml += "  </object>\n"
 
         rels_modelo += f' <Relationship Target="/{ruta_sub}" Id="rel-{n}" Type="{REL_MODELO}"/>\n'
 
     principal += " </resources>\n" + construccion + " </build>\n</model>\n"
-    ajustes += "</config>\n"
+    ajustes_xml += "</config>\n"
     rels_modelo += "</Relationships>"
 
     with zipfile.ZipFile(ruta, "w", zipfile.ZIP_DEFLATED) as z:
@@ -124,4 +128,6 @@ def escribir_3mf(ruta, objetos):
         z.writestr("3D/_rels/3dmodel.model.rels", rels_modelo)
         for nombre, contenido in submodelos.items():
             z.writestr(nombre, contenido)
-        z.writestr("Metadata/model_settings.config", ajustes)
+        z.writestr("Metadata/model_settings.config", ajustes_xml)
+        if ajustes is not None:
+            z.writestr("Metadata/project_settings.config", json.dumps(ajustes, indent=4, ensure_ascii=False))
