@@ -1,0 +1,30 @@
+Comprobaciones de los llaveros Arte23 (generado por generar.py)
+
+Llavero Pont de Sant Jordi — llavero_pont_sant_jordi.stl
+  [OK] Medidas: 55.00 × 30.00 × 3.80 mm (objetivo 55 × 30 × 3.8)
+  [OK] Malla cerrada: estanca=True, normales coherentes=True, volumen válido=True, cuerpos=1, manifold3d=NoError, 22240 triángulos
+  [OK] Orificio Ø5 mm libre de material en toda la altura (cortes cada 0,1 mm)
+  [OK] Material alrededor del orificio: 4.10 mm (mínimo 2.5)
+  [OK] Relieve: todo empieza en z = 3.2 mm y acaba en 3.8 mm (cambio de color al empezar la capa 17)
+  [OK] Relieve de paredes verticales: 596.3 mm² de superficie en relieve
+  [OK] Trazos del relieve de al menos 0,8 mm (2 líneas de 0,4): sin zonas finas
+  [OK] Separación entre piezas del relieve de al menos 0,6 mm: ninguna pieza se junta con otra
+  [INFO] 1 muescas de ángulo agudo dentro de una misma letra de menos de 0,6 mm (la punta se rellena; no afecta a la lectura)
+  [OK] Sin voladizos de más de 45° ni techos sueltos: se imprime plano sin soportes (0 caras colgadas)
+  [INFO] Volumen 5.49 cm³ → 6.8 g de PLA con relleno al 100 % (sin purga ni torre); base 6.4 g, relieve 0.44 g
+
+Llavero escudo MOSTRA — llavero_escudo_mostra.stl
+  [OK] Medidas: 42.00 × 48.00 × 3.80 mm (objetivo 42 × 48 × 3.8)
+  [OK] Malla cerrada: estanca=True, normales coherentes=True, volumen válido=True, cuerpos=1, manifold3d=NoError, 31032 triángulos
+  [OK] Orificio Ø5 mm libre de material en toda la altura (cortes cada 0,1 mm)
+  [OK] Material alrededor del orificio: 2.90 mm (mínimo 2.5)
+  [OK] Relieve: todo empieza en z = 3.2 mm y acaba en 3.8 mm (cambio de color al empezar la capa 17)
+  [OK] Relieve de paredes verticales: 440.8 mm² de superficie en relieve
+  [OK] Trazos del relieve de al menos 0,8 mm (2 líneas de 0,4): sin zonas finas
+  [OK] Separación entre piezas del relieve de al menos 0,6 mm: ninguna pieza se junta con otra
+  [INFO] 4 muescas de ángulo agudo dentro de una misma letra de menos de 0,6 mm (la punta se rellena; no afecta a la lectura)
+  [OK] Sin voladizos de más de 45° ni techos sueltos: se imprime plano sin soportes (0 caras colgadas)
+  [INFO] Volumen 5.06 cm³ → 6.3 g de PLA con relleno al 100 % (sin purga ni torre); base 5.9 g, relieve 0.33 g
+
+Placa: placa_llaveros_arte23.3mf (los dos llaveros, base en el filamento 1 y relieve en el 3).
+Resultado: todas las comprobaciones geométricas correctas.
