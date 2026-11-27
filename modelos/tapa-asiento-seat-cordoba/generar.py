@@ -34,7 +34,7 @@ from manifold3d import CrossSection, Manifold
 from matplotlib.font_manager import FontProperties
 from matplotlib.textpath import TextPath
 from shapely import affinity
-from shapely.geometry import Point, Polygon, box
+from shapely.geometry import LineString, Point, Polygon, box
 from shapely.geometry.polygon import orient
 from shapely.ops import unary_union
 
@@ -50,27 +50,38 @@ with open(os.path.join(AQUI, "contorno.json"), encoding="utf-8") as _f:
 
 # ---------------------------------------------------------------- medidas (mm)
 ALTO_TOTAL = 15.0      # catálogo VW: de la cama a lo alto de la cúpula
-CUPULA_ALTO = 4.5      # lo que sobresale la cúpula sobre la cara vista (vídeo)
-FONDO = ALTO_TOTAL - CUPULA_ALTO   # de la cama a la cara vista
+CUPULA_ALTO = 4.5      # lo que sobresale la cúpula sobre la cara vista (vídeo, de canto)
+FONDO = ALTO_TOTAL - CUPULA_ALTO   # de la cama a la cara vista, en el lado de la cúpula
+FONDO_PUNTA = 9.5      # de la cama a la cara vista en la punta derecha: la cara baja un poco hacia la punta
+BAJA_DESDE = 45.0      # x (mm) donde empieza a bajar la cara; antes es plana
 BORDE_ALTO = 3.0       # borde redondeado de la cúpula sobre la cara vista
 VALLE_ALTO = 2.3       # el valle entre el borde y la cúpula central
 PLACA = 2.2            # grosor de la placa
 FALDON = 1.8           # grosor de la pared de alrededor
-CANTO = 1.5            # radio del redondeo del canto de la cara vista
+PARED_MUESCA = 4.5     # pared gruesa del canto en diagonal, de la muesca a la punta (vídeo, por detrás)
+CANTO = 3.0            # radio del redondeo del canto de la cara vista (vídeo, de punta)
 AGUJERO_ARRIBA = 5.5   # diámetro de los dos agujeros de arriba
 AGUJERO_ABAJO = 4.5    # diámetro del agujero pequeño de abajo
-TORRETA = 10.0         # diámetro exterior de las torretas de los agujeros de arriba
+TORRETA = 10.0         # diámetro exterior de las torretas
 TORRETA_ALTO = 5.0     # lo que bajan las torretas desde la placa
-TEXTO_ALTO = 3.5       # altura de las letras de detrás
-RELIEVE = 0.5          # lo que sobresalen las letras
+NERVIO = 1.2           # grosor de los nervios de detrás
+NERVIO_ALTO = 3.0      # lo que bajan los nervios desde la placa
+TEXTO_ALTO = 3.2       # altura de las letras de detrás
+RELIEVE = 0.5          # lo que sobresalen letras, reloj de fecha y marcas
 
 ANILLO_C = tuple(CALCO["anillo"]["centro"])
 ANILLO_R = CALCO["anillo"]["radio"]
-# Agujeros (centro, diámetro, lleva torreta): el de abajo es el de x menor
+# Agujeros (centro, diámetro): el de abajo es el de y menor
 _ag = sorted(CALCO["agujeros"], key=lambda p: p[1])
-AGUJEROS = [(tuple(_ag[0]), AGUJERO_ABAJO, False)] + [(tuple(p), AGUJERO_ARRIBA, True) for p in _ag[1:]]
-# Centro de cada texto, en mm y visto desde delante (entre la cúpula y la muesca, sobre el agujero de abajo)
-TEXTOS = [("191 881 478", (91.0, 22.0)), (">PE<", (91.0, 16.3))]
+AGUJEROS = [(tuple(_ag[0]), AGUJERO_ABAJO)] + [(tuple(p), AGUJERO_ARRIBA) for p in sorted(_ag[1:])]
+
+# Detalles de detrás, sacados del vídeo (fotograma de los 10,4 s), en mm y vistos desde delante
+TEXTOS = [("191 881 478", (92.0, 27.5)), (">PE<", (92.0, 21.5))]   # sobre el agujero de abajo
+RELOJ = dict(centro=(114.0, 44.0), celda=(2.05, 2.5))   # reloj de fecha: meses 1-12 y años 94-98
+NERVIO_TORRETA = ((ANILLO_C[0] + ANILLO_R - 1, AGUJEROS[1][0][1]), (118.0, AGUJEROS[1][0][1] + 1.0))
+ALMOHADILLA = dict(centro=(144.5, 57.0), medidas=(10.0, 8.0))     # zona en relieve junto al 2º agujero
+MARCAS = [(90.8, 8.5), (171.0, 56.7)]                              # marcas redondas del expulsor
+CANTO_DIAGONAL = ((141.0, 21.0), (207.0, 58.0))                    # de la muesca a la punta
 
 CAMA = 255.0
 NEGRO = "#161616"
@@ -122,8 +133,8 @@ def girar(perfil, centro, z0, n=192):
     return Manifold.revolve(CrossSection([np.asarray(perfil)]), n).translate((centro[0], centro[1], z0))
 
 
-def texto(cadena, centro, alto):
-    """Letras en mm, centradas, escritas al revés para leerse mirando la pieza por detrás."""
+def texto(cadena, centro, alto, espejo=True):
+    """Letras en mm, centradas; con espejo, escritas al revés para leerse mirando la pieza por detrás."""
     tp = TextPath((0, 0), cadena, size=alto, prop=FontProperties(family="DejaVu Sans", weight="bold"))
     g = Polygon()
     for p in tp.to_polygons():
@@ -131,20 +142,22 @@ def texto(cadena, centro, alto):
             g = g.symmetric_difference(Polygon(p).buffer(0))
     x0, y0, x1, y1 = g.bounds
     g = affinity.translate(g, -(x0 + x1) / 2, -(y0 + y1) / 2)
-    g = affinity.scale(g, -1, 1, origin=(0, 0))
+    if espejo:
+        g = affinity.scale(g, -1, 1, origin=(0, 0))
     return affinity.translate(g, *centro)
 
 
 def perfil_cupula(R):
     """Perfil (r, z) de la cara de fuera de la cúpula, con z desde la cara vista.
-    Radios sacados de la foto: borde de fuera R, cresta del borde a 0,9 R,
-    valle entre 0,74 R y 0,80 R, cúpula central hasta 0,74 R."""
-    ra = R - CANTO - 0.2                 # empieza donde acaba el redondeo del canto
-    pts = [(ra, 0.0)]
-    cresta = 0.895 * R
-    for k in range(1, 9):                # subida redonda del borde
+    El borde de fuera del anillo es el contorno de la pieza: sube recto desde el faldón
+    (por eso, visto de canto, la zona de la cúpula es más alta y hay un escalón).
+    Radios sacados de la foto: cresta del borde a 0,9 R, valle entre 0,74 R y 0,80 R."""
+    ra = R + 0.15
+    pts = [(ra, -CANTO - 0.5), (ra, BORDE_ALTO - 1.6)]
+    cresta = 0.92 * R
+    for k in range(1, 9):                # redondeo de arriba del borde
         a = k / 8 * math.pi / 2
-        pts.append((ra - (ra - cresta) * (1 - math.cos(a)), BORDE_ALTO * math.sin(a)))
+        pts.append((ra - (ra - cresta) * (1 - math.cos(a)), BORDE_ALTO - 1.6 + 1.6 * math.sin(a)))
     valle_ext, valle_int = 0.80 * R, 0.74 * R
     for k in range(1, 7):                # bajada del borde al valle
         t = k / 6
@@ -157,52 +170,110 @@ def perfil_cupula(R):
     return pts
 
 
+def reloj_fecha():
+    """Reloj de fecha del molde: fila de meses 1-12 arriba, columna de años 94-98 a la izquierda
+    (mirando la pieza por detrás) y la cuadrícula de 12 x 5 casillas."""
+    cw, ch = RELOJ["celda"]
+    linea = 0.45
+    g = []
+    x0, y0 = -6.5 * cw, -3.0 * ch            # esquina de abajo a la izquierda (vista por detrás)
+    for i in range(13):                       # rayas verticales de la cuadrícula
+        x = x0 + (i + 1) * cw
+        g.append(box(x - linea / 2, y0, x + linea / 2, y0 + 5 * ch))
+    for j in range(6):                        # rayas horizontales
+        y = y0 + j * ch
+        g.append(box(x0 + cw, y - linea / 2, x0 + 13 * cw, y + linea / 2))
+    marco = box(x0 - 0.6, y0 - 0.6, x0 + 13 * cw + 0.6, y0 + 6 * ch + 0.6)
+    g.append(marco.difference(marco.buffer(-0.5)))
+    for i in range(12):                       # meses
+        g.append(texto(str(i + 1), (x0 + (i + 1.5) * cw, y0 + 5.5 * ch), 1.5, espejo=False))
+    for j, a in enumerate(("94", "95", "96", "97", "98")):
+        g.append(texto(a, (x0 + 0.5 * cw, y0 + (4.5 - j) * ch), 1.5, espejo=False))
+    t = unary_union(g)
+    t = affinity.scale(t, -1, 1, origin=(0, 0))          # se lee mirando por detrás
+    return affinity.translate(t, *RELOJ["centro"])
+
+
+def bajar_cara(v):
+    """La cara vista baja de FONDO (lado de la cúpula) a FONDO_PUNTA (punta derecha).
+    La parte de abajo (apoyada en la cama) no se mueve; lo que hay por encima de la cara
+    (la cúpula) sube y baja con ella."""
+    v = np.array(v, dtype=float)
+    x, z = v[:, 0], v[:, 2]
+    largo = CALCO["medidas_mm"][0]
+    t = np.clip((x - BAJA_DESDE) / (largo - BAJA_DESDE), 0, 1)
+    k = 1 - (1 - FONDO_PUNTA / FONDO) * t
+    v[:, 2] = np.where(z <= FONDO, z * k, z - FONDO * (1 - k))
+    return v
+
+
 def construir():
     sil = contorno()
     c, R = ANILLO_C, ANILLO_R
     techo = FONDO - PLACA          # cara de dentro de la placa
+    dentro_faldon = sil.buffer(-FALDON / 2, quad_segs=16)   # lo de dentro se solapa con el faldón
 
-    # Placa de la cara vista, con el canto redondeado
-    piezas = [prisma(sil, techo, FONDO - CANTO - techo)]
-    pasos = 8
+    # Bloque exterior con el canto de la cara vista redondeado
+    piezas = [prisma(sil, -0.5, FONDO - CANTO + 0.51)]   # por debajo de la cama: se recorta al final
+    pasos = 10
     for i in range(pasos):
         a0, a1 = i / pasos * math.pi / 2, (i + 1) / pasos * math.pi / 2
         z0 = FONDO - CANTO + CANTO * math.sin(a0)
         z1 = FONDO - CANTO + CANTO * math.sin(a1)
-        piezas.append(prisma(sil.buffer(-CANTO * (1 - math.cos(a1)), quad_segs=16), z0, z1 - z0))
-    # Paredes de detrás: el faldón de alrededor y el nervio redondo del anillo
-    faldon = sil.difference(sil.buffer(-FALDON, quad_segs=16))
-    nervio = Point(c).buffer(R + 1, quad_segs=64).difference(Point(c).buffer(R - FALDON - 0.4, quad_segs=64))
-    paredes = unary_union([faldon, nervio.intersection(sil)])
-    piezas.append(prisma(paredes, 0, techo + 0.05))
-    carcasa = Manifold.batch_boolean(piezas, manifold3d.OpType.Add)
+        piezas.append(prisma(sil.buffer(-CANTO * (1 - math.cos(a1)), quad_segs=16), z0, z1 - z0 + 0.005))
+    bloque = Manifold.batch_boolean(piezas, manifold3d.OpType.Add)
+    # Hueco de detrás: queda la placa y el faldón
+    hueco = prisma(sil.buffer(-FALDON, quad_segs=16), -1, techo + 1)
+    carcasa = bloque - hueco
+
+    # Lo que va por dentro, de la cama a la placa: nervio del anillo, pared gruesa del canto
+    # en diagonal y torretas
+    nervio_anillo = Point(c).buffer(R + 1, quad_segs=64).difference(Point(c).buffer(R - FALDON - 0.8, quad_segs=64))
+    diagonal = LineString(CANTO_DIAGONAL).buffer(7, cap_style=2)
+    pared = diagonal.intersection(sil).difference(sil.buffer(-PARED_MUESCA, quad_segs=16))
+    torretas = [Point(p).buffer(TORRETA / 2, quad_segs=32) for p, _ in AGUJEROS]
+    altos = unary_union([nervio_anillo, pared]).intersection(dentro_faldon)
+    carcasa = carcasa + prisma(altos, -0.5, techo + 0.55)
+    # Torretas: bajan TORRETA_ALTO desde la placa
+    carcasa = carcasa + prisma(unary_union(torretas).intersection(dentro_faldon),
+                               techo - TORRETA_ALTO, TORRETA_ALTO + 0.05)
+    # Nervio recto que pasa por la torreta de arriba, y la almohadilla junto a la otra
+    nervio = LineString(NERVIO_TORRETA).buffer(NERVIO / 2, cap_style=2)
+    (ax, ay), (aw, ah) = ALMOHADILLA["centro"], ALMOHADILLA["medidas"]
+    almohadilla = box(ax - aw / 2, ay - ah / 2, ax + aw / 2, ay + ah / 2).buffer(-2).buffer(2)
+    carcasa = carcasa + prisma(nervio.intersection(dentro_faldon), techo - NERVIO_ALTO, NERVIO_ALTO + 0.05)
+    carcasa = carcasa + prisma(almohadilla, techo - 1.5, 1.55)
 
     # Cúpula sobre la cara vista
     fuera = perfil_cupula(R)
-    cupula = girar([(0, -PLACA), (fuera[0][0], -PLACA)] + fuera, c, FONDO)
+    cupula = girar([(0, fuera[0][1])] + fuera, c, FONDO)
 
     # Hueco de la cúpula por detrás: la cara de fuera desplazada hacia dentro el grosor de la placa
     region = Polygon([(-p[0], p[1]) for p in reversed(fuera)] + fuera + [(fuera[0][0], -40), (-fuera[0][0], -40)])
-    dentro = region.buffer(-PLACA, quad_segs=8).intersection(box(0, -40, R, 20))
-    dentro = orient(dentro.simplify(0.01), 1.0)
-    pts = np.asarray(dentro.exterior.coords)[:-1]
+    hueco_c = region.buffer(-PLACA, quad_segs=8).intersection(box(0, -40, R + 1, 20))
+    hueco_c = orient(hueco_c.simplify(0.01), 1.0)
+    pts = np.asarray(hueco_c.exterior.coords)[:-1]
     pts[:, 0] = np.maximum(pts[:, 0], 0.0)
-    hueco_cupula = girar(pts, c, FONDO)
-    pieza = carcasa + cupula - hueco_cupula
+    pieza = carcasa + cupula - girar(pts, c, FONDO)
 
     # Tetón en el centro de la cúpula, por dentro
     pieza = pieza + cilindro(c, 9, FONDO + CUPULA_ALTO - PLACA - 3.5, 3.6)
 
-    # Torretas de los agujeros de arriba, por detrás
-    for p, d, torreta in AGUJEROS:
-        if torreta:
-            pieza = pieza + cilindro(p, TORRETA, techo - TORRETA_ALTO, TORRETA_ALTO + 0.01)
-    for p, d, _ in AGUJEROS:
-        pieza = pieza - cilindro(p, d, -1, FONDO + 2)
+    # Agujeros
+    for p, d in AGUJEROS:
+        pieza = pieza - cilindro(p, d, -1, ALTO_TOTAL + 2)
 
-    # Número de pieza y material en relieve por detrás (se leen mirando por detrás)
-    letras = unary_union([texto(t, p, TEXTO_ALTO) for t, p in TEXTOS])
-    pieza = pieza + prisma(letras, techo - RELIEVE, RELIEVE + 0.01)
+    # En relieve por detrás: número, material, reloj de fecha y marcas del expulsor
+    relieve = unary_union([texto(t, p, TEXTO_ALTO) for t, p in TEXTOS] + [reloj_fecha()]
+                          + [Point(p).buffer(1.6, quad_segs=16) for p in MARCAS])
+    pieza = pieza + prisma(relieve.intersection(dentro_faldon), techo - RELIEVE, RELIEVE + 0.05)
+
+    # Recorte por la cama (z = 0): todo lo de abajo queda en un mismo plano limpio
+    x0, y0, x1, y1 = sil.bounds
+    pieza = pieza ^ Manifold.cube((x1 - x0 + 20, y1 - y0 + 20, ALTO_TOTAL + 10)).translate((x0 - 10, y0 - 10, 0))
+
+    # La cara baja hacia la punta (la pieza se afina de la cúpula a la punta)
+    pieza = pieza.refine_to_length(6.0).warp_batch(bajar_cara)
     return pieza, sil
 
 
@@ -257,10 +328,19 @@ def vista(malla, ruta):
     # Vista de detrás: girada sobre el eje vertical de la imagen (se ve como en el vídeo)
     vb = v.copy(); vb[:, 0] *= -1; vb[:, 2] *= -1
     detras = render(vb @ rot.T, f)
-    w = max(delante.shape[1], detras.shape[1])
-    lienzo = np.full((delante.shape[0] + detras.shape[0], w), 245, np.uint8)
-    lienzo[:delante.shape[0], :delante.shape[1]] = delante
-    lienzo[delante.shape[0]:, :detras.shape[1]] = detras
+    # De canto, mirando el canto de arriba (como en el vídeo a los 44 s): se ve cómo baja la cara
+    canto = render(np.c_[v[:, 0], v[:, 2], v[:, 1]], f[:, ::-1])
+    # Tres cuartos por detrás, para ver nervios, torretas y la pared de la muesca
+    r2 = (trimesh.transformations.rotation_matrix(math.radians(-50), [1, 0, 0]) @
+          trimesh.transformations.rotation_matrix(math.radians(180), [0, 1, 0]))[:3, :3]
+    detras2 = render(v @ r2.T, f)
+    vistas = [delante, canto, detras, detras2]
+    w = max(x.shape[1] for x in vistas)
+    lienzo = np.full((sum(x.shape[0] for x in vistas), w), 245, np.uint8)
+    y = 0
+    for x in vistas:
+        lienzo[y:y + x.shape[0], :x.shape[1]] = x
+        y += x.shape[0]
     Image.fromarray(lienzo).save(ruta)
 
 

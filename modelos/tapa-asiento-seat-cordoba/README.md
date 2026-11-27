@@ -28,18 +28,44 @@ La relación ancho/largo que sale de la foto (0,449) y del vídeo (0,446) cuadra
 | Contorno, círculo de la cúpula y posición de los 3 agujeros | Foto cenital de una pieza nueva (anuncio de omecar.de), calcada con `calcar_contorno.py` y escalada a 210 mm. Está en `contorno.json`. |
 | Largo 210 mm, alto total 15 mm | Catálogo Volkswagen Classic Parts. |
 | Perfil de la cúpula (borde redondeado, valle y cúpula central) | Radios medidos en la misma foto. |
-| Lo que sobresale la cúpula (4,5 mm), grosores y la parte de detrás | Vídeo de la pieza. |
+| Alturas de canto, escalón, redondeo del canto y todo lo de detrás | Vídeo de la pieza (de canto a los 44 s, por detrás a los 10 s y de 54 a 64 s). |
 
-La pieza es una carcasa abierta por detrás:
+Vista previa, de arriba abajo: cara vista, de canto (mirando el canto de arriba), por detrás y por detrás en tres cuartos.
 
-- placa de 2,2 mm con el canto redondeado y faldón de 1,8 mm alrededor (10,5 mm de la cama a la cara vista);
-- cúpula de 75,4 mm de diámetro que sobresale 4,5 mm (en total, 15 mm); hueca por detrás, con un tetón en el centro y un nervio redondo;
-- agujeros de 5,5 mm arriba, con torreta por detrás, y uno de 4,5 mm abajo;
-- detrás, en relieve, `191 881 478` y `>PE<`, en el mismo sitio que la original.
+### Por delante
+
+- **Cúpula de 75,4 mm**: su borde de fuera es el propio contorno de la pieza a la izquierda y sube recto desde el faldón. Por eso, de canto, **la zona de la cúpula es más alta y hay un escalón** donde empieza el cuerpo (como en el vídeo a los 44 s).
+- La cara vista **baja hacia la punta**: 10,5 mm de la cama a la cara en el lado de la cúpula y 9,5 mm en la punta; la cúpula llega a 15 mm.
+- Canto de la cara vista redondeado (radio 3 mm), muesca y punta calcadas de la foto.
+
+### Por detrás
+
+- Placa de 2,2 mm y faldón de 1,8 mm alrededor.
+- Cuenco de la cúpula con tetón en el centro y nervio redondo alrededor.
+- **Pared gruesa (4,5 mm) en el canto en diagonal**, de la muesca a la punta: en el vídeo es el bloque que sobresale junto a la muesca.
+- Torretas en los 3 agujeros (en tu pieza la de arriba está rota; aquí va entera).
+- Nervio recto que pasa por la torreta de arriba, desde la cúpula.
+- Zona en relieve junto al segundo agujero y dos marcas redondas del expulsor.
+- En relieve: **reloj de fecha** (meses 1–12, años 94–98), `191 881 478` y `>PE<`, en su sitio.
 
 **Medidas: 210 × 94 × 15 mm.**
 
-Lo que no sale en ninguna foto de internet y está sacado del vídeo, así que es aproximado: los grosores, el diámetro de los agujeros y cómo es por detrás. Tampoco lleva el gancho de detrás. Si al probarla en el asiento algo no encaja, con una medida de la pieza original se corrige.
+### Lo que aún es aproximado
+
+El vídeo no da milímetros, así que estas medidas están estimadas:
+- las alturas de canto (10,5 mm en el lado de la cúpula y 9,5 mm en la punta);
+- el grosor de la placa y del faldón, y el de la pared en diagonal;
+- el diámetro de los agujeros;
+- la posición exacta de los nervios y las marcas de detrás.
+
+Las pestañas que sobresalen del faldón por detrás tampoco van: en el vídeo no se ve bien cuántas son ni dónde están.
+
+Para dejarlo exacto hacen falta estas medidas de la pieza original (con regla o pie de rey):
+1. con la pieza boca abajo en la mesa, la altura de la mesa a lo alto de la cúpula;
+2. lo mismo en el cuerpo junto a la cúpula y en la punta;
+3. el grosor de la placa (por un agujero) y del faldón;
+4. el diámetro de los agujeros;
+5. una foto de la parte de detrás desde arriba, plana y con una regla al lado, y otra de canto con la regla.
 
 ## Archivos (carpeta `salida/`)
 
