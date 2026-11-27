@@ -241,7 +241,6 @@ def construir():
     nervio = LineString(NERVIO_TORRETA).buffer(NERVIO / 2, cap_style=2)
     (ax, ay), (aw, ah) = ALMOHADILLA["centro"], ALMOHADILLA["medidas"]
     almohadilla = box(ax - aw / 2, ay - ah / 2, ax + aw / 2, ay + ah / 2).buffer(-2).buffer(2)
-    carcasa = carcasa + prisma(nervio.intersection(dentro_faldon), techo - NERVIO_ALTO, NERVIO_ALTO + 0.05)
     carcasa = carcasa + prisma(almohadilla, techo - 1.5, 1.55)
 
     # Cúpula sobre la cara vista
@@ -262,11 +261,6 @@ def construir():
     # Agujeros
     for p, d in AGUJEROS:
         pieza = pieza - cilindro(p, d, -1, ALTO_TOTAL + 2)
-
-    # En relieve por detrás: número, material, reloj de fecha y marcas del expulsor
-    relieve = unary_union([texto(t, p, TEXTO_ALTO) for t, p in TEXTOS] + [reloj_fecha()]
-                          + [Point(p).buffer(1.6, quad_segs=16) for p in MARCAS])
-    pieza = pieza + prisma(relieve.intersection(dentro_faldon), techo - RELIEVE, RELIEVE + 0.05)
 
     # Recorte por la cama (z = 0): todo lo de abajo queda en un mismo plano limpio
     x0, y0, x1, y1 = sil.bounds

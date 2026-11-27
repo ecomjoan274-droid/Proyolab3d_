@@ -44,9 +44,8 @@ Vista previa, de arriba abajo: cara vista, de canto (mirando el canto de arriba)
 - Cuenco de la cúpula con tetón en el centro y nervio redondo alrededor.
 - **Pared gruesa (4,5 mm) en el canto en diagonal**, de la muesca a la punta: en el vídeo es el bloque que sobresale junto a la muesca.
 - Torretas en los 3 agujeros (en tu pieza la de arriba está rota; aquí va entera).
-- Nervio recto que pasa por la torreta de arriba, desde la cúpula.
-- Zona en relieve junto al segundo agujero y dos marcas redondas del expulsor.
-- En relieve: **reloj de fecha** (meses 1–12, años 94–98), `191 881 478` y `>PE<`, en su sitio.
+- Zona en relieve junto al segundo agujero.
+- Sin reloj de fecha, número ni `>PE<` (no hacen falta).
 
 **Medidas: 210 × 94 × 15 mm.**
 
