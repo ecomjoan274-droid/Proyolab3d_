@@ -3,22 +3,26 @@
 
 Uso: generar.py [carpeta_salida]
 
-Copiada del vídeo (fotograma de frente a los 22,9 s). La pieza es una carcasa de
-plástico: una placa con faldón alrededor, abierta por detrás, con
+Es la misma pieza que llevan el Golf 2, Jetta 2, Scirocco, Corrado, Polo y Lupo
+("Verkleidung Sitzgestell, rechts, ohne Loch"). Medidas del catálogo
+Volkswagen Classic Parts: 210 x 95 x 15 mm.
 
-  - una cúpula redonda a la izquierda (tapa el mecanismo del respaldo), con un
-    escalón en anillo alrededor y hueca por detrás, con un tetón en el centro;
-  - dos agujeros arriba con su torreta por detrás y uno pequeño abajo;
-  - una muesca en semicírculo abajo (por donde pasa el eje / la palanca);
-  - el extremo derecho en punta, subiendo en diagonal;
-  - por detrás, en relieve, el número 191 881 478 y >PE< (polietileno).
+El contorno, el anillo de la cúpula y los agujeros salen de la foto cenital de
+una pieza nueva (anuncio de omecar.de), calcada con calcar_contorno.py y
+escalada a 210 mm de largo: están en contorno.json. Lo que no se ve en esa foto
+(grosores y la parte de detrás) sale del vídeo de la pieza.
+
+La pieza es una carcasa de plástico abierta por detrás:
+  - placa con el canto redondeado y faldón alrededor;
+  - cúpula a la izquierda (tapa el mecanismo del respaldo): borde redondeado,
+    un pequeño valle y una cúpula central; hueca por detrás, con tetón;
+  - dos agujeros arriba con torreta por detrás y uno pequeño abajo;
+  - la muesca de abajo y el extremo derecho en punta;
+  - por detrás, en relieve, 191 881 478 y >PE< (polietileno).
 
 Se imprime con la cara vista hacia arriba y el faldón apoyado en la cama.
-
-Las medidas del contorno están tomadas en píxeles sobre el vídeo y se pasan a mm
-con el largo total (LARGO). Con las medidas reales de la pieza, se cambian las
-constantes de abajo y se vuelve a generar.
 """
+import json
 import math
 import os
 import sys
@@ -30,7 +34,7 @@ from manifold3d import CrossSection, Manifold
 from matplotlib.font_manager import FontProperties
 from matplotlib.textpath import TextPath
 from shapely import affinity
-from shapely.geometry import Point, Polygon
+from shapely.geometry import Point, Polygon, box
 from shapely.geometry.polygon import orient
 from shapely.ops import unary_union
 
@@ -41,41 +45,39 @@ from proyecto_3mf import escribir_3mf  # noqa: E402
 sys.path.append(os.path.join(AQUI, "..", "perfiles-anycubic"))
 from kobra3v2 import ajustes_proyecto  # noqa: E402
 
-# ---------------------------------------------------------------- medidas (mm)
-LARGO = 230.0        # de la punta de la cúpula a la punta derecha (ESTIMADO: falta la medida real)
-FONDO = 12.0         # grosor total sin la cúpula: de la cama a la cara vista
-PLACA = 2.5          # grosor de la placa (cara vista)
-FALDON = 2.0         # grosor de la pared de alrededor
-CANTO = 2.0          # radio del redondeo del canto de la cara vista
-ANILLO_ALTO = 3.0    # escalón del anillo sobre la cara vista
-CUPULA_ALTO = 7.5    # altura de la cúpula sobre la cara vista
-AGUJERO_ARRIBA = 6.0 # diámetro de los dos agujeros de arriba
-AGUJERO_ABAJO = 4.5  # diámetro del agujero pequeño de abajo
-TORRETA = 11.0       # diámetro exterior de las torretas de los agujeros de arriba
-TORRETA_ALTO = 6.0   # lo que bajan las torretas desde la placa
-TEXTO_ALTO = 4.0     # altura de las letras de detrás
-RELIEVE = 0.5        # lo que sobresalen las letras
+with open(os.path.join(AQUI, "contorno.json"), encoding="utf-8") as _f:
+    CALCO = json.load(_f)
 
-# ------------------------------------------- contorno medido en el vídeo (píxeles)
-# Fotograma de frente, ampliado x4; x hacia la derecha, y hacia abajo.
-PX_IZQ, PX_DER, PX_ABAJO = 58, 1566, 745
-S = LARGO / (PX_DER - PX_IZQ)                 # mm por píxel
-ANILLO_C, ANILLO_R = (338, 352), 280          # borde de fuera del anillo (es el contorno a la izquierda)
-CUPULA_R = 200                                # borde de la cúpula
-# Contorno del cuerpo, de la cúpula hacia la derecha por arriba y vuelta por abajo
-CUERPO = [(338, 72), (1480, 86), (1535, 98), (1560, 140), (1566, 300), (1546, 342),
-          (1062, 590), (1000, 640), (840, 745), (470, 745), (330, 660), (200, 600), (200, 100)]
-MUESCA = [(848, 722), (958, 545), (1062, 592)]  # tres puntos del arco de la muesca
-AGUJEROS = [((810, 322), AGUJERO_ARRIBA, True), ((1192, 340), AGUJERO_ARRIBA, True),
-            ((645, 680), AGUJERO_ABAJO, False)]   # (centro, diámetro, lleva torreta)
-TEXTOS = [("191 881 478", (690, 615)), (">PE<", (690, 655))]  # centro, visto desde delante
+# ---------------------------------------------------------------- medidas (mm)
+ALTO_TOTAL = 15.0      # catálogo VW: de la cama a lo alto de la cúpula
+CUPULA_ALTO = 4.5      # lo que sobresale la cúpula sobre la cara vista (vídeo)
+FONDO = ALTO_TOTAL - CUPULA_ALTO   # de la cama a la cara vista
+BORDE_ALTO = 3.0       # borde redondeado de la cúpula sobre la cara vista
+VALLE_ALTO = 2.3       # el valle entre el borde y la cúpula central
+PLACA = 2.2            # grosor de la placa
+FALDON = 1.8           # grosor de la pared de alrededor
+CANTO = 1.5            # radio del redondeo del canto de la cara vista
+AGUJERO_ARRIBA = 5.5   # diámetro de los dos agujeros de arriba
+AGUJERO_ABAJO = 4.5    # diámetro del agujero pequeño de abajo
+TORRETA = 10.0         # diámetro exterior de las torretas de los agujeros de arriba
+TORRETA_ALTO = 5.0     # lo que bajan las torretas desde la placa
+TEXTO_ALTO = 3.5       # altura de las letras de detrás
+RELIEVE = 0.5          # lo que sobresalen las letras
+
+ANILLO_C = tuple(CALCO["anillo"]["centro"])
+ANILLO_R = CALCO["anillo"]["radio"]
+# Agujeros (centro, diámetro, lleva torreta): el de abajo es el de x menor
+_ag = sorted(CALCO["agujeros"], key=lambda p: p[1])
+AGUJEROS = [(tuple(_ag[0]), AGUJERO_ABAJO, False)] + [(tuple(p), AGUJERO_ARRIBA, True) for p in _ag[1:]]
+# Centro de cada texto, en mm y visto desde delante (entre la cúpula y la muesca, sobre el agujero de abajo)
+TEXTOS = [("191 881 478", (91.0, 22.0)), (">PE<", (91.0, 16.3))]
 
 CAMA = 255.0
 NEGRO = "#161616"
 PROCESO = {
     "layer_height": "0.2",
     "initial_layer_print_height": "0.2",
-    "wall_loops": "3",                     # el faldón de 2 mm sale macizo
+    "wall_loops": "3",                     # el faldón sale macizo
     "top_shell_layers": "6",
     "bottom_shell_layers": "4",
     "sparse_infill_density": "30%",
@@ -88,28 +90,13 @@ PROCESO = {
 }
 
 
-def mm(p):
-    x, y = p
-    return ((x - PX_IZQ) * S, (PX_ABAJO - y) * S)
-
-
-def circulo_3_puntos(a, b, c):
-    (ax, ay), (bx, by), (cx, cy) = a, b, c
-    d = 2 * (ax * (by - cy) + bx * (cy - ay) + cx * (ay - by))
-    ux = ((ax**2 + ay**2) * (by - cy) + (bx**2 + by**2) * (cy - ay) + (cx**2 + cy**2) * (ay - by)) / d
-    uy = ((ax**2 + ay**2) * (cx - bx) + (bx**2 + by**2) * (ax - cx) + (cx**2 + cy**2) * (bx - ax)) / d
-    return (ux, uy), math.hypot(ax - ux, ay - uy)
-
-
 def contorno():
-    """Silueta de la pieza vista de frente, en mm, con las esquinas redondeadas."""
-    anillo = Point(mm(ANILLO_C)).buffer(ANILLO_R * S, quad_segs=64)
-    cuerpo = Polygon([mm(p) for p in CUERPO])
-    (mx, my), mr = circulo_3_puntos(*[mm(p) for p in MUESCA])
-    g = unary_union([anillo, cuerpo]).difference(Point(mx, my).buffer(mr, quad_segs=48))
-    g = g.buffer(6, quad_segs=16).buffer(-6, quad_segs=16)   # rincones redondeados (r 6)
-    g = g.buffer(-4, quad_segs=16).buffer(4, quad_segs=16)   # esquinas redondeadas (r 4)
-    return g.simplify(0.02)
+    """Silueta de la pieza vista de frente, en mm (calcada de la foto)."""
+    g = Polygon(CALCO["contorno"]).buffer(0)
+    g = unary_union([g, Point(ANILLO_C).buffer(ANILLO_R, quad_segs=64)])
+    g = g.buffer(3, quad_segs=16).buffer(-3, quad_segs=16)    # rellena las mellas del calco (textura de la foto)
+    g = g.buffer(-2, quad_segs=16).buffer(2, quad_segs=16)    # y quita los picos
+    return g.simplify(0.03)
 
 
 def seccion(g):
@@ -148,10 +135,31 @@ def texto(cadena, centro, alto):
     return affinity.translate(g, *centro)
 
 
+def perfil_cupula(R):
+    """Perfil (r, z) de la cara de fuera de la cúpula, con z desde la cara vista.
+    Radios sacados de la foto: borde de fuera R, cresta del borde a 0,9 R,
+    valle entre 0,74 R y 0,80 R, cúpula central hasta 0,74 R."""
+    ra = R - CANTO - 0.2                 # empieza donde acaba el redondeo del canto
+    pts = [(ra, 0.0)]
+    cresta = 0.895 * R
+    for k in range(1, 9):                # subida redonda del borde
+        a = k / 8 * math.pi / 2
+        pts.append((ra - (ra - cresta) * (1 - math.cos(a)), BORDE_ALTO * math.sin(a)))
+    valle_ext, valle_int = 0.80 * R, 0.74 * R
+    for k in range(1, 7):                # bajada del borde al valle
+        t = k / 6
+        pts.append((cresta - (cresta - valle_ext) * t,
+                    VALLE_ALTO + (BORDE_ALTO - VALLE_ALTO) * (0.5 + 0.5 * math.cos(math.pi * t))))
+    pts.append((valle_int, VALLE_ALTO))
+    for k in range(1, 17):               # cúpula central
+        rr = valle_int * (1 - k / 16)
+        pts.append((rr, VALLE_ALTO + (CUPULA_ALTO - VALLE_ALTO) * (1 - (rr / valle_int) ** 2) ** 0.7))
+    return pts
+
+
 def construir():
     sil = contorno()
-    c = mm(ANILLO_C)
-    R, r = ANILLO_R * S, CUPULA_R * S
+    c, R = ANILLO_C, ANILLO_R
     techo = FONDO - PLACA          # cara de dentro de la placa
 
     # Placa de la cara vista, con el canto redondeado
@@ -163,31 +171,23 @@ def construir():
         z1 = FONDO - CANTO + CANTO * math.sin(a1)
         piezas.append(prisma(sil.buffer(-CANTO * (1 - math.cos(a1)), quad_segs=16), z0, z1 - z0))
     # Paredes de detrás: el faldón de alrededor y el nervio redondo del anillo
-    # (algo más grueso por dentro: el hueco de la cúpula lo recorta a su medida)
     faldon = sil.difference(sil.buffer(-FALDON, quad_segs=16))
     nervio = Point(c).buffer(R + 1, quad_segs=64).difference(Point(c).buffer(R - FALDON - 0.4, quad_segs=64))
     paredes = unary_union([faldon, nervio.intersection(sil)])
     piezas.append(prisma(paredes, 0, techo + 0.05))
     carcasa = Manifold.batch_boolean(piezas, manifold3d.OpType.Add)
 
-    # Anillo y cúpula sobre la cara vista (perfil r, z desde la cara vista)
-    ra = R - CANTO - 0.2          # el anillo empieza donde acaba el redondeo del canto
-    exterior = [(0, -PLACA), (ra, -PLACA), (ra, 0.0),
-                (ra - 0.3, ANILLO_ALTO * 0.6), (ra - 0.9, ANILLO_ALTO * 0.92), (ra - 1.8, ANILLO_ALTO),
-                (r + 1.2, ANILLO_ALTO), (r + 0.3, ANILLO_ALTO + 0.6)]
-    for k in range(1, 13):        # hombro redondo de la cúpula, de r a r-4
-        a = k / 12 * math.pi / 2
-        exterior.append((r - 4 + 4 * math.cos(a) + 0.3 * (1 - math.sin(a)),
-                         ANILLO_ALTO + 0.6 + (CUPULA_ALTO - 0.4 - ANILLO_ALTO - 0.6) * math.sin(a)))
-    for k in range(1, 9):         # techo casi plano, algo abombado
-        rr = (r - 4) * (1 - k / 8)
-        exterior.append((max(rr, 0.0), CUPULA_ALTO - 0.4 * (rr / (r - 4)) ** 2))
-    cupula = girar(exterior, c, FONDO)
+    # Cúpula sobre la cara vista
+    fuera = perfil_cupula(R)
+    cupula = girar([(0, -PLACA), (fuera[0][0], -PLACA)] + fuera, c, FONDO)
 
-    interior = [(0, -FONDO - 1), (R - FALDON, -FONDO - 1), (R - FALDON, ANILLO_ALTO - PLACA),
-                (r - 0.5, ANILLO_ALTO - PLACA), (r - 2.5, CUPULA_ALTO - PLACA - 1.0),
-                (r - 6, CUPULA_ALTO - PLACA), (0, CUPULA_ALTO - PLACA)]
-    hueco_cupula = girar(interior, c, FONDO)
+    # Hueco de la cúpula por detrás: la cara de fuera desplazada hacia dentro el grosor de la placa
+    region = Polygon([(-p[0], p[1]) for p in reversed(fuera)] + fuera + [(fuera[0][0], -40), (-fuera[0][0], -40)])
+    dentro = region.buffer(-PLACA, quad_segs=8).intersection(box(0, -40, R, 20))
+    dentro = orient(dentro.simplify(0.01), 1.0)
+    pts = np.asarray(dentro.exterior.coords)[:-1]
+    pts[:, 0] = np.maximum(pts[:, 0], 0.0)
+    hueco_cupula = girar(pts, c, FONDO)
     pieza = carcasa + cupula - hueco_cupula
 
     # Tetón en el centro de la cúpula, por dentro
@@ -196,12 +196,12 @@ def construir():
     # Torretas de los agujeros de arriba, por detrás
     for p, d, torreta in AGUJEROS:
         if torreta:
-            pieza = pieza + cilindro(mm(p), TORRETA, techo - TORRETA_ALTO, TORRETA_ALTO + 0.01)
+            pieza = pieza + cilindro(p, TORRETA, techo - TORRETA_ALTO, TORRETA_ALTO + 0.01)
     for p, d, _ in AGUJEROS:
-        pieza = pieza - cilindro(mm(p), d, -1, FONDO + 2)
+        pieza = pieza - cilindro(p, d, -1, FONDO + 2)
 
     # Número de pieza y material en relieve por detrás (se leen mirando por detrás)
-    letras = unary_union([texto(t, mm(p), TEXTO_ALTO) for t, p in TEXTOS])
+    letras = unary_union([texto(t, p, TEXTO_ALTO) for t, p in TEXTOS])
     pieza = pieza + prisma(letras, techo - RELIEVE, RELIEVE + 0.01)
     return pieza, sil
 
