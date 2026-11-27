@@ -28,43 +28,30 @@ La relación ancho/largo que sale de la foto (0,449) y del vídeo (0,446) cuadra
 | Contorno, círculo de la cúpula y posición de los 3 agujeros | Foto cenital de una pieza nueva (anuncio de omecar.de), calcada con `calcar_contorno.py` y escalada a 210 mm. Está en `contorno.json`. |
 | Largo 210 mm, alto total 15 mm | Catálogo Volkswagen Classic Parts. |
 | Perfil de la cúpula (borde redondeado, valle y cúpula central) | Radios medidos en la misma foto. |
-| Alturas de canto, escalón, redondeo del canto y todo lo de detrás | Vídeo de la pieza (de canto a los 44 s, por detrás a los 10 s y de 54 a 64 s). |
+| Alturas: borde bajo y pared alta | Foto de canto de la pieza (canto de la muesca): la pared alta mide casi el doble que el borde bajo (90 px frente a 46 px). |
+| Pivote, bloques, media luna y pestaña de detrás | Fotos de la parte de detrás con las flechas y el segundo vídeo. |
 
-Vista previa, de arriba abajo: cara vista, de canto (mirando el canto de arriba), por detrás y por detrás en tres cuartos.
+Vista previa (`salida/tapa_vista.png`), de arriba abajo: cara vista, de canto (mirando el canto de la muesca), por detrás y por detrás en tres cuartos.
 
-### Por delante
+### Alturas (con la pieza boca arriba, apoyada en la pared alta)
 
-- **Cúpula de 75,4 mm**: su borde de fuera es el propio contorno de la pieza a la izquierda y sube recto desde el faldón. Por eso, de canto, **la zona de la cúpula es más alta y hay un escalón** donde empieza el cuerpo (como en el vídeo a los 44 s).
-- La cara vista **baja hacia la punta**: 10,5 mm de la cama a la cara en el lado de la cúpula y 9,5 mm en la punta; la cúpula llega a 15 mm.
-- Canto de la cara vista redondeado (radio 3 mm), muesca y punta calcadas de la foto.
+- **Pared alta**: de la muesca a la punta por el canto en diagonal, y por el extremo derecho. Llega hasta la cama: **11,5 mm** de la cama a la cara vista, con 5 mm de grueso.
+- **Borde bajo**: todo lo demás (alrededor de la cúpula, el canto de arriba y el de abajo hasta la muesca). Baja solo **5,9 mm** desde la cara vista, así que se queda a 5,6 mm de la cama. Ese es el escalón que se ve de canto.
+- **Cúpula**: 75,4 mm de diámetro; sobresale 3,5 mm de la cara vista (15 mm en total, como en el catálogo).
 
 ### Por detrás
 
-- Placa de 2,2 mm y faldón de 1,8 mm alrededor.
-- Cuenco de la cúpula con tetón en el centro y nervio redondo alrededor.
-- **Pared gruesa (4,5 mm) en el canto en diagonal**, de la muesca a la punta: en el vídeo es el bloque que sobresale junto a la muesca.
-- Torretas en los 3 agujeros (en tu pieza la de arriba está rota; aquí va entera).
-- Zona en relieve junto al segundo agujero.
+- **Pivote con dientes** (clip de abeto) en el agujero de arriba que está junto a la cúpula: 6,5 mm de grueso, con tres dientes de 8,5 mm, y llega casi hasta la cama.
+- **Bloque largo** de la cúpula hacia el pivote, **un bloque** a la derecha del pivote y **otro** junto al segundo agujero, con una **media luna** en relieve encima.
+- **Pestaña** pegada al canto de arriba.
+- Torretas en el agujero de abajo y en el segundo de arriba; cuenco de la cúpula con tetón y nervio redondo.
 - Sin reloj de fecha, número ni `>PE<` (no hacen falta).
 
 **Medidas: 210 × 94 × 15 mm.**
 
 ### Lo que aún es aproximado
 
-El vídeo no da milímetros, así que estas medidas están estimadas:
-- las alturas de canto (10,5 mm en el lado de la cúpula y 9,5 mm en la punta);
-- el grosor de la placa y del faldón, y el de la pared en diagonal;
-- el diámetro de los agujeros;
-- la posición exacta de los nervios y las marcas de detrás.
-
-Las pestañas que sobresalen del faldón por detrás tampoco van: en el vídeo no se ve bien cuántas son ni dónde están.
-
-Para dejarlo exacto hacen falta estas medidas de la pieza original (con regla o pie de rey):
-1. con la pieza boca abajo en la mesa, la altura de la mesa a lo alto de la cúpula;
-2. lo mismo en el cuerpo junto a la cúpula y en la punta;
-3. el grosor de la placa (por un agujero) y del faldón;
-4. el diámetro de los agujeros;
-5. una foto de la parte de detrás desde arriba, plana y con una regla al lado, y otra de canto con la regla.
+Las alturas salen de proporciones en las fotos y del alto del catálogo, no de una medida con regla. Los tamaños de los bloques y del pivote están medidos en una foto tomada en ángulo. Si al probarla algo no encaja, con la medida de esa zona se corrige en `generar.py` (todo está al principio).
 
 ## Archivos (carpeta `salida/`)
 
@@ -77,8 +64,8 @@ Para dejarlo exacto hacen falta estas medidas de la pieza original (con regla o 
 
 - **Impresora:** Anycubic Kobra 3 V2 0.4 nozzle, perfiles oficiales de OrcaSlicer (`../perfiles-anycubic`).
 - **Proceso:** 0.20mm Standard con estos cambios:
-  - cara vista hacia arriba y faldón sobre la cama;
-  - soportes en árbol solo desde la cama (la placa hace de techo sobre el hueco de detrás);
+  - cara vista hacia arriba, apoyada en la pared alta;
+  - soportes en árbol solo desde la cama: sostienen el borde bajo (a 5,6 mm de la cama), la punta del pivote y la placa, que hace de techo sobre el hueco de detrás;
   - 3 perímetros, 6 capas arriba, relleno al 30 %;
   - borde (brim) de 6 mm por fuera;
   - costura atrás, en el canto de arriba.
